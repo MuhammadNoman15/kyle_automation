@@ -173,7 +173,7 @@ def setup_driver():
     chrome_options.add_argument("--enable-unsafe-swiftshader")
     chrome_options.add_argument("--window-size=1920x1080")
     
-    # SSL and security related options to fix handshake errors
+    # Comprehensive SSL and security related options to fix handshake errors
     chrome_options.add_argument("--ignore-ssl-errors")
     chrome_options.add_argument("--ignore-certificate-errors")
     chrome_options.add_argument("--ignore-certificate-errors-spki-list")
@@ -187,6 +187,35 @@ def setup_driver():
     chrome_options.add_argument("--disable-background-timer-throttling")
     chrome_options.add_argument("--disable-backgrounding-occluded-windows")
     chrome_options.add_argument("--disable-renderer-backgrounding")
+    
+    # Additional SSL/TLS options to completely eliminate handshake errors
+    chrome_options.add_argument("--ignore-ssl-errors-spki-list")
+    chrome_options.add_argument("--ignore-ssl-errors-skip-list") 
+    chrome_options.add_argument("--disable-ssl-false-start")
+    chrome_options.add_argument("--ignore-certificate-errors-ssl")
+    chrome_options.add_argument("--ignore-certificate-errors-tls")
+    chrome_options.add_argument("--ignore-urlfetcher-cert-requests")
+    chrome_options.add_argument("--reduce-security-for-testing")
+    chrome_options.add_argument("--allow-insecure-localhost")
+    chrome_options.add_argument("--disable-secure-dns")
+    chrome_options.add_argument("--disable-tls13-early-data")
+    chrome_options.add_argument("--ssl-version-fallback-min=tls1")
+    chrome_options.add_argument("--tls-intolerant-servers=https://servpro.ngsapps.net")
+    
+    # Network and connection options
+    chrome_options.add_argument("--aggressive-cache-discard")
+    chrome_options.add_argument("--disable-background-networking")
+    chrome_options.add_argument("--disable-client-side-phishing-detection")
+    chrome_options.add_argument("--disable-component-extensions-with-background-pages")
+    chrome_options.add_argument("--disable-default-apps")
+    chrome_options.add_argument("--disable-domain-reliability")
+    chrome_options.add_argument("--disable-sync")
+    
+    # Logging options to reduce SSL error noise
+    chrome_options.add_argument("--log-level=3")  # Only show fatal errors
+    chrome_options.add_argument("--silent")
+    chrome_options.add_argument("--disable-logging")
+    chrome_options.add_argument("--disable-gpu-sandbox")
     
     # chrome_options.add_argument("--headless")
     
@@ -777,67 +806,117 @@ def fill_internal_participants(driver, wait, data):
 
 def fill_external_participants(driver, wait, data):
     """Fill the External Participants section"""
+    print("🎯 Filling External Participants section with correct field IDs...")
+    
+    # CORRECT Field mappings based on actual HTML source code
     field_mappings = {
-        'brokerAgent': 'ctl00_ContentPlaceHolder1_JobParentInformation_ExternalParticipants_ComboBox_BrokerAgent',
-        'brokerAgentContact': 'ctl00_ContentPlaceHolder1_JobParentInformation_ExternalParticipants_ComboBox_BrokerAgentContact',
-        'insuranceCarrier': 'ctl00_ContentPlaceHolder1_JobParentInformation_ExternalParticipants_ComboBox_InsuranceCarrier',
-        'primaryAdjuster': 'ctl00_ContentPlaceHolder1_JobParentInformation_ExternalParticipants_ComboBox_PrimaryAdjuster',
-        'primaryFieldAdjuster': 'ctl00_ContentPlaceHolder1_JobParentInformation_ExternalParticipants_ComboBox_PrimaryFieldAdjuster',
-        'propertyManagement': 'ctl00_ContentPlaceHolder1_JobParentInformation_ExternalParticipants_ComboBox_PropertyManagement',
-        'propertyManagementContact': 'ctl00_ContentPlaceHolder1_JobParentInformation_ExternalParticipants_ComboBox_PropertyManagementContact',
-        'contractorCompany': 'ctl00_ContentPlaceHolder1_JobParentInformation_ExternalParticipants_ComboBox_ContractorCompany',
-        'contractorContact': 'ctl00_ContentPlaceHolder1_JobParentInformation_ExternalParticipants_ComboBox_ContractorContact'
+        'brokerAgent': 'ctl00_ContentPlaceHolder1_JobParentInformation_ExternalParticipants_SystemCompanyParticipantCombobox_2_Input',
+        'brokerAgentContact': 'ctl00_ContentPlaceHolder1_JobParentInformation_ExternalParticipants_SystemIndividualParticipantCombobox_4_Input',
+        'insuranceCarrier': 'ctl00_ContentPlaceHolder1_JobParentInformation_ExternalParticipants_SystemCompanyParticipantCombobox_3_Input',
+        'primaryAdjuster': 'ctl00_ContentPlaceHolder1_JobParentInformation_ExternalParticipants_SystemIndividualParticipantCombobox_3_Input',
+        'primaryFieldAdjuster': 'ctl00_ContentPlaceHolder1_JobParentInformation_ExternalParticipants_SystemIndividualParticipantCombobox_34_Input',
+        'propertyManagement': 'ctl00_ContentPlaceHolder1_JobParentInformation_ExternalParticipants_SystemCompanyParticipantCombobox_5_Input',
+        'propertyManagementContact': 'ctl00_ContentPlaceHolder1_JobParentInformation_ExternalParticipants_SystemIndividualParticipantCombobox_9_Input',
+        'contractorCompany': 'ctl00_ContentPlaceHolder1_JobParentInformation_ExternalParticipants_SystemCompanyParticipantCombobox_24_Input',
+        'contractorContact': 'ctl00_ContentPlaceHolder1_JobParentInformation_ExternalParticipants_SystemIndividualParticipantCombobox_33_Input',
+        'independentAdjustingFirm': 'ctl00_ContentPlaceHolder1_JobParentInformation_ExternalParticipants_SystemCompanyParticipantCombobox_1_Input',
+        'independentAdjusterContact': 'ctl00_ContentPlaceHolder1_JobParentInformation_ExternalParticipants_SystemIndividualParticipantCombobox_6_Input',
+        'publicAdjustingFirm': 'ctl00_ContentPlaceHolder1_JobParentInformation_ExternalParticipants_SystemCompanyParticipantCombobox_10_Input',
+        'publicAdjusterContact': 'ctl00_ContentPlaceHolder1_JobParentInformation_ExternalParticipants_SystemIndividualParticipantCombobox_8_Input',
+        'primaryMortgage': 'ctl00_ContentPlaceHolder1_JobParentInformation_ExternalParticipants_SystemCompanyParticipantCombobox_14_Input',
+        'secondaryMortgage': 'ctl00_ContentPlaceHolder1_JobParentInformation_ExternalParticipants_SystemCompanyParticipantCombobox_25_Input',
+        'tpaCompany': 'ctl00_ContentPlaceHolder1_JobParentInformation_ExternalParticipants_SystemCompanyParticipantCombobox_23_Input',
+        'tpa': 'ctl00_ContentPlaceHolder1_JobParentInformation_ExternalParticipants_SystemIndividualParticipantCombobox_32_Input',
+        'billToCompany': 'ctl00_ContentPlaceHolder1_JobParentInformation_ExternalParticipants_SystemCompanyParticipantCombobox_26_Input',
+        'billToContact': 'ctl00_ContentPlaceHolder1_JobParentInformation_ExternalParticipants_SystemIndividualParticipantCombobox_35_Input',
+        'secondaryContact': 'ctl00_ContentPlaceHolder1_JobParentInformation_ExternalParticipants_CustomIndividualParticipantCombobox_1675_Input',
+        'businessContact': 'ctl00_ContentPlaceHolder1_JobParentInformation_ExternalParticipants_CustomIndividualParticipantCombobox_1717_Input'
     }
     
     for field_name, field_id in field_mappings.items():
         if field_name in data and data[field_name]:
-            fill_dropdown_field(driver, wait, field_id, data[field_name], field_name)
+            value = data[field_name]
+            print(f"  🔍 Processing External Participant field: {field_name} = {value}")
+            # All fields are Telerik RadComboBox controls  
+            fill_telerik_dropdown_field(driver, wait, field_id, value, field_name)
 
 def fill_policy_information(driver, wait, data):
     """Fill the Policy Information section"""
+    print("🎯 Filling Policy Information section with correct field IDs...")
+    
+    # CORRECT Field mappings based on actual HTML source code
     field_mappings = {
         'claimNumber': 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_ClaimNumber',
-        'fileNumber': 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_FileNumber',
+        'fileNumber': 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_ExternalFileNumber',
         'policyNumber': 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_PolicyNumber',
-        'yearBuilt': 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_YearBuilt'
+        'yearBuilt': 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_Year'
     }
     
     for field_name, field_id in field_mappings.items():
         if field_name in data and data[field_name]:
             value = str(data[field_name])
-            fill_text_field(driver, wait, field_id, value, field_name)
+            print(f"  🔍 Processing Policy field: {field_name} = {value}")
+            # All text fields are Telerik RadTextBox controls
+            fill_telerik_text_field(driver, wait, field_id, value, field_name)
     
-    # Handle date fields
+    # Handle date fields - CORRECT date input field IDs
     date_mappings = {
-        'policyStartDate': 'ctl00_ContentPlaceHolder1_JobParentInformation_DatePicker_PolicyStartDate',
-        'policyExpirationDate': 'ctl00_ContentPlaceHolder1_JobParentInformation_DatePicker_PolicyExpirationDate'
+        'policyStartDate': 'ctl00_ContentPlaceHolder1_JobParentInformation_DatePicker_PolicyStartDate_dateInput',
+        'policyExpirationDate': 'ctl00_ContentPlaceHolder1_JobParentInformation_DatePicker_PolicyExpirationDate_dateInput'
     }
     
     for field_name, field_id in date_mappings.items():
         if field_name in data and data[field_name]:
-            fill_date_field(driver, wait, field_id, data[field_name], field_name)
+            date_value = data[field_name]
+            print(f"  🔍 Processing Policy date field: {field_name} = {date_value}")
+            # These are Telerik RadDatePicker controls
+            fill_telerik_date_field(driver, wait, field_id, date_value, field_name)
 
 def fill_division_services(driver, wait, data):
     """Fill the Division/Services section"""
+    print("🎯 Filling Division/Services section with correct field IDs...")
+    
     if 'servicesSelected' in data:
         services = data['servicesSelected']
+        print(f"  🔍 Services to select: {services}")
         
-        # Handle checkbox list for services
+        # Handle checkbox table for services - CORRECT table ID
         try:
-            checkbox_list = driver.find_element(By.ID, 'ctl00_ContentPlaceHolder1_JobParentInformation_CheckBoxList_Division')
-            checkboxes = checkbox_list.find_elements(By.TAG_NAME, 'input')
+            checkbox_table = driver.find_element(By.ID, 'ctl00_ContentPlaceHolder1_JobParentInformation_CheckBox_RequiredServices')
+            checkboxes = checkbox_table.find_elements(By.TAG_NAME, 'input')
+            
+            print(f"  📊 Found {len(checkboxes)} service checkboxes")
             
             for checkbox in checkboxes:
-                label_element = checkbox.find_element(By.XPATH, "../label")
-                label_text = label_element.text.strip()
-                
-                if label_text in services:
-                    if not checkbox.is_selected():
-                        checkbox.click()
-                        print(f"✅ Selected service: {label_text}")
+                if checkbox.get_attribute('type') == 'checkbox':
+                    # Get the label element that follows the checkbox
+                    try:
+                        label_element = checkbox.find_element(By.XPATH, "following-sibling::label")
+                        label_text = label_element.text.strip()
+                        
+                        print(f"    🔍 Found service option: '{label_text}'")
+                        
+                        # Check if this service should be selected
+                        service_should_be_selected = any(service.lower() in label_text.lower() or 
+                                                       label_text.lower() in service.lower() 
+                                                       for service in services)
+                        
+                        if service_should_be_selected:
+                            if not checkbox.is_selected():
+                                checkbox.click()
+                                print(f"    ✅ Selected service: {label_text}")
+                            else:
+                                print(f"    ✅ Service already selected: {label_text}")
+                        
+                    except Exception as e:
+                        print(f"    ⚠️ Could not process checkbox: {str(e)}")
+                        continue
                         
         except Exception as e:
-            print(f"❌ Error selecting services: {str(e)}")
+            print(f"❌ Error finding services table: {str(e)}")
+    
+    else:
+        print("⚠️ No services specified in form data")
 
 def fill_general_information_only(driver, form_data):
     """
@@ -939,6 +1018,96 @@ def fill_internal_participants_only(driver, form_data):
         print(f"❌ Error during Internal Participants test: {str(e)}")
         raise
 
+def fill_external_participants_only(driver, form_data):
+    """
+    Fill only the External Participants section for testing purposes
+    
+    Args:
+        driver: Selenium WebDriver instance
+        form_data: Dictionary containing form data
+    """
+    wait = WebDriverWait(driver, 10)
+    
+    print("🎯 Starting External Participants section test...")
+    
+    try:
+        # Wait for form to be fully loaded
+        print("⏳ Waiting for form to load...")
+        time.sleep(3)
+        
+        # Fill External Participants Section
+        if 'externalParticipants' in form_data:
+            print("📝 Testing External Participants section...")
+            fill_external_participants(driver, wait, form_data['externalParticipants'])
+        else:
+            print("❌ No external participants data found in form data")
+        
+        print("✅ External Participants section test completed!")
+        
+    except Exception as e:
+        print(f"❌ Error during External Participants test: {str(e)}")
+        raise
+
+def fill_policy_information_only(driver, form_data):
+    """
+    Fill only the Policy Information section for testing purposes
+    
+    Args:
+        driver: Selenium WebDriver instance
+        form_data: Dictionary containing form data
+    """
+    wait = WebDriverWait(driver, 10)
+    
+    print("🎯 Starting Policy Information section test...")
+    
+    try:
+        # Wait for form to be fully loaded
+        print("⏳ Waiting for form to load...")
+        time.sleep(3)
+        
+        # Fill Policy Information Section
+        if 'policyInformation' in form_data:
+            print("📝 Testing Policy Information section...")
+            fill_policy_information(driver, wait, form_data['policyInformation'])
+        else:
+            print("❌ No policy information data found in form data")
+        
+        print("✅ Policy Information section test completed!")
+        
+    except Exception as e:
+        print(f"❌ Error during Policy Information test: {str(e)}")
+        raise
+
+def fill_division_services_only(driver, form_data):
+    """
+    Fill only the Division/Services section for testing purposes
+    
+    Args:
+        driver: Selenium WebDriver instance
+        form_data: Dictionary containing form data
+    """
+    wait = WebDriverWait(driver, 10)
+    
+    print("🎯 Starting Division/Services section test...")
+    
+    try:
+        # Wait for form to be fully loaded
+        print("⏳ Waiting for form to load...")
+        time.sleep(3)
+        
+        # Fill Division/Services Section
+        if 'division' in form_data:
+            print("📝 Testing Division/Services section...")
+            fill_division_services(driver, wait, form_data['division'])
+        else:
+            print("❌ No division/services data found in form data")
+        
+        print("✅ Division/Services section test completed!")
+        
+    except Exception as e:
+        print(f"❌ Error during Division/Services test: {str(e)}")
+        raise
+
 def create_sample_form_data():
     """
     Create sample form data based on the JSON schema
@@ -1010,27 +1179,27 @@ def create_sample_form_data():
             "NA Field Accounts Manager": "Adams, Sherri"
         },
         "externalParticipants": {
-            "brokerAgent": "",
-            "brokerAgentContact": "",
+            "brokerAgent": "ABC Insurance Brokers",
+            "brokerAgentContact": "John Smith",
             "insuranceCarrier": "State Farm",
             "primaryAdjuster": "Mark Davis",
-            "primaryFieldAdjuster": "",
-            "propertyManagement": "",
-            "propertyManagementContact": "",
-            "contractorCompany": "",
-            "contractorContact": "",
-            "independentAdjustingFirm": "",
-            "independentAdjusterContact": "",
-            "publicAdjustingFirm": "",
-            "publicAdjusterContact": "",
-            "primaryMortgage": "",
-            "secondaryMortgage": "",
-            "tpaCompany": "",
-            "tpa": "",
-            "billToCompany": "",
-            "billToContact": "",
-            "secondaryContact": "",
-            "businessContact": ""
+            "primaryFieldAdjuster": "Sarah Johnson",
+            "propertyManagement": "Property Management Co.",
+            "propertyManagementContact": "Mike Wilson",
+            "contractorCompany": "SERVPRO Construction",
+            "contractorContact": "Tom Rodriguez",
+            "independentAdjustingFirm": "Independent Adjusters Inc.",
+            "independentAdjusterContact": "Lisa Chen",
+            "publicAdjustingFirm": "Public Adjusters LLC",
+            "publicAdjusterContact": "David Brown",
+            "primaryMortgage": "Wells Fargo",
+            "secondaryMortgage": "Chase Bank",
+            "tpaCompany": "TPA Services Inc.",
+            "tpa": "Amanda Taylor",
+            "billToCompany": "Billing Company LLC",
+            "billToContact": "Robert Jones",
+            "secondaryContact": "Jennifer Davis",
+            "businessContact": "Michael Thompson"
         },
         "policyInformation": {
             "claimNumber": "SF-2024-12345",
@@ -1042,9 +1211,10 @@ def create_sample_form_data():
         },
         "division": {
             "servicesSelected": [
-                "Water Damage Restoration",
-                "Structural Drying",
-                "Mold Remediation"
+                "Water Mitigation",
+                "Structure",
+                "Mold",
+                "Reconstruction"
             ]
         }
     }
@@ -1483,7 +1653,7 @@ def servpro_login():
                 
                 if fill_form == 'y' or fill_form == 'yes':
                     # Ask for filling preference
-                    fill_choice = input("\n📋 Choose filling option:\n1. Fill entire form\n2. Fill only General Information (for testing)\n3. Fill only Customer Information and Job Address Information (for testing)\n4. Fill only Internal Participants (for testing)\nEnter choice (1, 2, 3, or 4): ").strip()
+                    fill_choice = input("\n📋 Choose filling option:\n1. Fill entire form\n2. Fill only General Information (for testing)\n3. Fill only Customer Information and Job Address Information (for testing)\n4. Fill only Internal Participants (for testing)\n5. Fill only External Participants (for testing)\n6. Fill only Policy Information (for testing)\n7. Fill only Division/Services (for testing)\nEnter choice (1, 2, 3, 4, 5, 6, or 7): ").strip()
                     
                     # Ask for data source
                     data_source = input("\n📋 Choose data source:\n1. Sample data\n2. Load from JSON file\nEnter choice (1 or 2): ").strip()
@@ -1507,6 +1677,15 @@ def servpro_login():
                         elif fill_choice == '4':
                             print("\n🎯 Testing Internal Participants section only...")
                             fill_internal_participants_only(driver, form_data)
+                        elif fill_choice == '5':
+                            print("\n🎯 Testing External Participants section only...")
+                            fill_external_participants_only(driver, form_data)
+                        elif fill_choice == '6':
+                            print("\n🎯 Testing Policy Information section only...")
+                            fill_policy_information_only(driver, form_data)
+                        elif fill_choice == '7':
+                            print("\n🎯 Testing Division/Services section only...")
+                            fill_division_services_only(driver, form_data)
                         else:
                             fill_job_creation_form(driver, form_data)
                         print("\n🎉 Form filled successfully!")
