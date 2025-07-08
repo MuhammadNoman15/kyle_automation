@@ -56,10 +56,11 @@
     "supervisor": "Robert Martinez",
     "foreman": "Carlos Garcia",
     "accounting": "Amanda Lee",
-    "marketing": "",
-    "dispatcher": "",
-    "naAdministrator": "",
-    "naFieldAccountsManager": ""
+    "Marketing": "Adams, Sherri",
+    "Dispatcher": "Adams, Sherri",
+    "NA Administrator": "Adams, Sherri",
+    
+    "NA Field Accounts Manager": "Adams, Sherri"
   },
   "externalParticipants": {
     "brokerAgent": "",

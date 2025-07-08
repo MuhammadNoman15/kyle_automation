@@ -638,6 +638,7 @@ def fill_general_information(driver, wait, data):
 
 def fill_customer_information(driver, wait, data):
     """Fill the Customer Information section"""
+    print("🎯 Filling Customer Information section with correct field IDs...")
     
     # Handle customer type radio buttons
     if 'customerType' in data:
@@ -651,89 +652,128 @@ def fill_customer_information(driver, wait, data):
             radio_button = wait.until(EC.element_to_be_clickable((By.ID, radio_id)))
             radio_button.click()
             print(f"✅ Selected customer type: {customer_type}")
+            time.sleep(1)  # Wait for form to update
         except Exception as e:
             print(f"❌ Error selecting customer type: {str(e)}")
     
+    # CORRECT Field mappings based on actual HTML source code for Individual Customer
     field_mappings = {
+        'customer': 'ctl00_ContentPlaceHolder1_JobParentInformation_DropDown_Customer_Input',
+        'title': 'ctl00_ContentPlaceHolder1_JobParentInformation_ctl17_TitleDropDownTree',
         'firstName': 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_FirstName',
         'lastName': 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_LastName',
         'email': 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_Email',
         'secondaryEmail': 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_SecondaryEmail',
-        'address': 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_Address',
-        'zipCode': 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_ZIP',
+        'address': 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_Address_Input',
+        'zipCode': 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_Zip',
         'city': 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_City',
-        'countyRegion': 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_County',
-        'country': 'ctl00_ContentPlaceHolder1_JobParentInformation_DropDown_Country',
-        'stateProvince': 'ctl00_ContentPlaceHolder1_JobParentInformation_DropDown_State'
+        'countyRegion': 'ctl00_ContentPlaceHolder1_JobParentInformation_comboBox_CustomerCounty_Input',
+        'country': 'ctl00_ContentPlaceHolder1_JobParentInformation_DropDown_Country_Input',
+        'stateProvince': 'ctl00_ContentPlaceHolder1_JobParentInformation_DropDown_State_Input'
     }
     
     # Handle "Same as Job Address" checkbox
-    if 'isSameAsJobAddress' in data:
-        fill_checkbox_field(driver, wait, 'ctl00_ContentPlaceHolder1_JobParentInformation_CheckBox_SameAsJobAddress', 
+    if 'isSameAsJobAddress' in data and data['isSameAsJobAddress']:
+        fill_checkbox_field(driver, wait, 'ctl00_ContentPlaceHolder1_JobParentInformation_CheckBox_SameAsIndividualLossAddress', 
                            data['isSameAsJobAddress'], 'Same as Job Address')
     
     for field_name, field_id in field_mappings.items():
-        if field_name in data:
+        if field_name in data and data[field_name]:
             value = data[field_name]
-            if field_name in ['country', 'stateProvince']:
-                fill_dropdown_field(driver, wait, field_id, value, field_name)
-            else:
-                fill_text_field(driver, wait, field_id, value, field_name)
+            print(f"  🔍 Processing Customer field: {field_name} = {value}")
+            
+            if field_name == 'title':
+                # Handle title dropdown tree (complex control)
+                fill_telerik_dropdown_field(driver, wait, field_id, value, field_name)
+            elif field_name in ['customer', 'countyRegion', 'country', 'stateProvince']:
+                fill_telerik_dropdown_field(driver, wait, field_id, value, field_name)
+            elif field_name == 'address':
+                # Handle RadSearchBox for address
+                fill_telerik_text_field(driver, wait, field_id, value, field_name)
+            elif field_name in ['firstName', 'lastName', 'email', 'secondaryEmail', 'zipCode', 'city']:
+                fill_telerik_text_field(driver, wait, field_id, value, field_name)
     
-    # Handle phone number
+    # Handle phone numbers with correct IDs
     if 'mainPhoneNumber' in data:
         phone_data = data['mainPhoneNumber']
-        if 'number' in phone_data:
+        if 'number' in phone_data and phone_data['number']:
             fill_text_field(driver, wait, 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_MainPhone', 
                           phone_data['number'], 'Main Phone')
-        if 'type' in phone_data:
-            fill_dropdown_field(driver, wait, 'ctl00_ContentPlaceHolder1_JobParentInformation_DropDown_MainPhoneType', 
-                              phone_data['type'], 'Phone Type')
+        if 'extension' in phone_data and phone_data['extension']:
+            fill_text_field(driver, wait, 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_MainPhoneExt', 
+                          phone_data['extension'], 'Main Phone Extension')
+        if 'type' in phone_data and phone_data['type']:
+            # Handle phone type dropdown if needed
+            pass
 
 def fill_job_address_information(driver, wait, data):
     """Fill the Job Address Information section"""
+    print("🎯 Filling Job Address Information section with correct field IDs...")
     
     # Handle "Same as Customer Address" checkbox
-    if 'isSameAsCustomerAddress' in data:
-        fill_checkbox_field(driver, wait, 'ctl00_ContentPlaceHolder1_JobParentInformation_CheckBox_SameAsCustomerAddress', 
+    if 'isSameAsCustomerAddress' in data and data['isSameAsCustomerAddress']:
+        fill_checkbox_field(driver, wait, 'ctl00_ContentPlaceHolder1_JobParentInformation_CheckBox_SameIndividualAddress', 
                            data['isSameAsCustomerAddress'], 'Same as Customer Address')
     
+    # CORRECT Field mappings based on actual HTML source code for Job Address Information
     field_mappings = {
-        'firstName': 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_LossFirstName',
-        'lastName': 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_LossLastName',
-        'address': 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_AddressLoss',
-        'zipCode': 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_ZIPLoss',
+        'firstName': 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_FirstNameLoss',
+        'lastName': 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_LastNameLoss',
+        'address': 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_AddressLoss_Input',
+        'zipCode': 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_ZipLoss',
         'city': 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_CityLoss',
-        'countyRegion': 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_CountyLoss',
-        'country': 'ctl00_ContentPlaceHolder1_JobParentInformation_DropDown_CountryLoss',
-        'stateProvince': 'ctl00_ContentPlaceHolder1_JobParentInformation_DropDown_StateLoss'
+        'countyRegion': 'ctl00_ContentPlaceHolder1_JobParentInformation_comboBox_CustomerLossCounty_Input',
+        'country': 'ctl00_ContentPlaceHolder1_JobParentInformation_DropDown_CountryLoss_Input',
+        'stateProvince': 'ctl00_ContentPlaceHolder1_JobParentInformation_DropDown_StateLoss_Input'
     }
     
     for field_name, field_id in field_mappings.items():
         if field_name in data and data[field_name]:
             value = data[field_name]
-            if field_name in ['country', 'stateProvince']:
-                fill_dropdown_field(driver, wait, field_id, value, f"Loss {field_name}")
+            print(f"  🔍 Processing Job Address field: {field_name} = {value}")
+            
+            if field_name in ['countyRegion', 'country', 'stateProvince']:
+                fill_telerik_dropdown_field(driver, wait, field_id, value, f"Loss {field_name}")
+            elif field_name == 'address':
+                # Handle RadSearchBox for address
+                fill_telerik_text_field(driver, wait, field_id, value, f"Loss {field_name}")
             else:
-                fill_text_field(driver, wait, field_id, value, f"Loss {field_name}")
+                # Handle text fields
+                fill_telerik_text_field(driver, wait, field_id, value, f"Loss {field_name}")
+    
+    # Handle phone numbers for Job Address
+    if 'mainPhoneNumber' in data:
+        phone_data = data['mainPhoneNumber']
+        if 'number' in phone_data and phone_data['number']:
+            fill_text_field(driver, wait, 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_MainPhoneLoss', 
+                          phone_data['number'], 'Job Address Main Phone')
+        if 'extension' in phone_data and phone_data['extension']:
+            fill_text_field(driver, wait, 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_MainPhoneLossExtension', 
+                          phone_data['extension'], 'Job Address Main Phone Extension')
 
 def fill_internal_participants(driver, wait, data):
     """Fill the Internal Participants section"""
+    print("🎯 Filling Internal Participants section with correct field IDs...")
+    
+    # CORRECT Field mappings based on actual HTML source code
     field_mappings = {
-        'estimator': 'ctl00_ContentPlaceHolder1_JobParentInformation_InternalParticipants_DropDown_Estimator',
-        'coordinator': 'ctl00_ContentPlaceHolder1_JobParentInformation_InternalParticipants_DropDown_Coordinator',
-        'supervisor': 'ctl00_ContentPlaceHolder1_JobParentInformation_InternalParticipants_DropDown_Supervisor',
-        'foreman': 'ctl00_ContentPlaceHolder1_JobParentInformation_InternalParticipants_DropDown_Foreman',
-        'accounting': 'ctl00_ContentPlaceHolder1_JobParentInformation_InternalParticipants_DropDown_Accounting',
-        'marketing': 'ctl00_ContentPlaceHolder1_JobParentInformation_InternalParticipants_DropDown_Marketing',
-        'dispatcher': 'ctl00_ContentPlaceHolder1_JobParentInformation_InternalParticipants_DropDown_Dispatcher',
-        'naAdministrator': 'ctl00_ContentPlaceHolder1_JobParentInformation_InternalParticipants_DropDown_NAAdministrator',
-        'naFieldAccountsManager': 'ctl00_ContentPlaceHolder1_JobParentInformation_InternalParticipants_DropDown_NAFieldAccountsManager'
+        'estimator': 'ctl00_ContentPlaceHolder1_JobParentInformation_InternalParticpantsControl_InternalParticipantsList_ctl00_EstimatorComboBox_Input',
+        'coordinator': 'ctl00_ContentPlaceHolder1_JobParentInformation_InternalParticpantsControl_InternalParticipantsList_ctl01_EstimatorComboBox_Input',
+        'supervisor': 'ctl00_ContentPlaceHolder1_JobParentInformation_InternalParticpantsControl_InternalParticipantsList_ctl02_EstimatorComboBox_Input',
+        'foreman': 'ctl00_ContentPlaceHolder1_JobParentInformation_InternalParticpantsControl_InternalParticipantsList_ctl03_EstimatorComboBox_Input',
+        'accounting': 'ctl00_ContentPlaceHolder1_JobParentInformation_InternalParticpantsControl_InternalParticipantsList_ctl04_EstimatorComboBox_Input',
+        'marketing': 'ctl00_ContentPlaceHolder1_JobParentInformation_InternalParticpantsControl_InternalParticipantsList_ctl05_EstimatorComboBox_Input',
+        'dispatcher': 'ctl00_ContentPlaceHolder1_JobParentInformation_InternalParticpantsControl_InternalParticipantsList_ctl06_EstimatorComboBox_Input',
+        'naAdministrator': 'ctl00_ContentPlaceHolder1_JobParentInformation_InternalParticpantsControl_InternalParticipantsList_ctl07_EstimatorComboBox_Input',
+        'naFieldAccountsManager': 'ctl00_ContentPlaceHolder1_JobParentInformation_InternalParticpantsControl_InternalParticipantsList_ctl08_EstimatorComboBox_Input'
     }
     
     for field_name, field_id in field_mappings.items():
         if field_name in data and data[field_name]:
-            fill_dropdown_field(driver, wait, field_id, data[field_name], field_name)
+            value = data[field_name]
+            print(f"  🔍 Processing Internal Participant field: {field_name} = {value}")
+            # All fields are Telerik RadComboBox controls
+            fill_telerik_dropdown_field(driver, wait, field_id, value, field_name)
 
 def fill_external_participants(driver, wait, data):
     """Fill the External Participants section"""
@@ -829,6 +869,76 @@ def fill_general_information_only(driver, form_data):
         print(f"❌ Error during General Information test: {str(e)}")
         raise
 
+def fill_customer_and_job_address_only(driver, form_data):
+    """
+    Fill only the Customer Information and Job Address Information sections for testing purposes
+    
+    Args:
+        driver: Selenium WebDriver instance
+        form_data: Dictionary containing form data
+    """
+    wait = WebDriverWait(driver, 10)
+    
+    print("🎯 Starting Customer Information and Job Address Information section test...")
+    
+    try:
+        # Wait for form to be fully loaded
+        print("⏳ Waiting for form to load...")
+        time.sleep(3)
+        
+        # Fill Customer Information Section
+        if 'customerInformation' in form_data:
+            print("📝 Testing Customer Information section...")
+            fill_customer_information(driver, wait, form_data['customerInformation'])
+            
+            # Small delay between sections
+            time.sleep(2)
+        else:
+            print("❌ No customer information data found in form data")
+        
+        # Fill Job Address Information Section
+        if 'jobAddressInformation' in form_data:
+            print("📝 Testing Job Address Information section...")
+            fill_job_address_information(driver, wait, form_data['jobAddressInformation'])
+        else:
+            print("❌ No job address information data found in form data")
+        
+        print("✅ Customer Information and Job Address Information section test completed!")
+        
+    except Exception as e:
+        print(f"❌ Error during Customer/Job Address test: {str(e)}")
+        raise
+
+def fill_internal_participants_only(driver, form_data):
+    """
+    Fill only the Internal Participants section for testing purposes
+    
+    Args:
+        driver: Selenium WebDriver instance
+        form_data: Dictionary containing form data
+    """
+    wait = WebDriverWait(driver, 10)
+    
+    print("🎯 Starting Internal Participants section test...")
+    
+    try:
+        # Wait for form to be fully loaded
+        print("⏳ Waiting for form to load...")
+        time.sleep(3)
+        
+        # Fill Internal Participants Section
+        if 'internalParticipants' in form_data:
+            print("📝 Testing Internal Participants section...")
+            fill_internal_participants(driver, wait, form_data['internalParticipants'])
+        else:
+            print("❌ No internal participants data found in form data")
+        
+        print("✅ Internal Participants section test completed!")
+        
+    except Exception as e:
+        print(f"❌ Error during Internal Participants test: {str(e)}")
+        raise
+
 def create_sample_form_data():
     """
     Create sample form data based on the JSON schema
@@ -855,35 +965,37 @@ def create_sample_form_data():
             "customerType": "Individual",
             "isSameAsJobAddress": False,
             "customer": "",
-            "title": "",
+            "title": "Mr.",
             "firstName": "John",
             "lastName": "Smith",
             "email": "john.smith@email.com",
-            "secondaryEmail": "",
+            "secondaryEmail": "john.alt@email.com",
             "address": "123 Main Street",
             "zipCode": "30309",
             "city": "Atlanta",
-            "countyRegion": "Fulton",
-            "country": "United States",
+            "countyRegion": "Fulton County",
+            "country": "USA",
             "stateProvince": "Georgia",
             "mainPhoneNumber": {
                 "number": "1-404-555-1234",
+                "extension": "",
                 "type": "Mobile"
             }
         },
         "jobAddressInformation": {
-            "isSameAsCustomerAddress": True,
-            "firstName": "",
-            "lastName": "",
-            "address": "",
-            "zipCode": "",
-            "city": "",
-            "countyRegion": "",
-            "country": "",
-            "stateProvince": "",
+            "isSameAsCustomerAddress": False,
+            "firstName": "John",
+            "lastName": "Smith",
+            "address": "456 Loss Address Street",
+            "zipCode": "30309",
+            "city": "Atlanta",
+            "countyRegion": "Fulton County",
+            "country": "USA",
+            "stateProvince": "Georgia",
             "mainPhoneNumber": {
-                "number": "",
-                "type": "Mobile"
+                "number": "1-404-555-5678",
+                "extension": "",
+                "type": "Home"
             }
         },
         "internalParticipants": {
@@ -892,10 +1004,10 @@ def create_sample_form_data():
             "supervisor": "Mike Wilson",
             "foreman": "Tom Rodriguez",
             "accounting": "Lisa Chen",
-            "marketing": "",
-            "dispatcher": "",
-            "naAdministrator": "",
-            "naFieldAccountsManager": ""
+            "Marketing": "Adams, Sherri",
+            "Dispatcher": "Adams, Sherri",
+            "NA Administrator": "Adams, Sherri",
+            "NA Field Accounts Manager": "Adams, Sherri"
         },
         "externalParticipants": {
             "brokerAgent": "",
@@ -983,14 +1095,14 @@ def servpro_login():
     print("Initializing browser...")
     driver = setup_driver()
     driver.maximize_window()
-    wait = WebDriverWait(driver, 20)
+    wait = WebDriverWait(driver, 10)
     
     try:
         # Navigate to login page
         print("Navigating to login URL...")
         driver.get(login_url)
         print("Waiting for page to load...")
-        time.sleep(5)  # Increased wait time to ensure page loads
+        time.sleep(2)  # Increased wait time to ensure page loads
         
         # Print the page title to confirm we're on the right page
         print(f"Page title: {driver.title}")
@@ -1371,7 +1483,7 @@ def servpro_login():
                 
                 if fill_form == 'y' or fill_form == 'yes':
                     # Ask for filling preference
-                    fill_choice = input("\n📋 Choose filling option:\n1. Fill entire form\n2. Fill only General Information (for testing)\nEnter choice (1 or 2): ").strip()
+                    fill_choice = input("\n📋 Choose filling option:\n1. Fill entire form\n2. Fill only General Information (for testing)\n3. Fill only Customer Information and Job Address Information (for testing)\n4. Fill only Internal Participants (for testing)\nEnter choice (1, 2, 3, or 4): ").strip()
                     
                     # Ask for data source
                     data_source = input("\n📋 Choose data source:\n1. Sample data\n2. Load from JSON file\nEnter choice (1 or 2): ").strip()
@@ -1389,6 +1501,12 @@ def servpro_login():
                         if fill_choice == '2':
                             print("\n🎯 Testing General Information section only...")
                             fill_general_information_only(driver, form_data)
+                        elif fill_choice == '3':
+                            print("\n🎯 Testing Customer Information and Job Address Information sections...")
+                            fill_customer_and_job_address_only(driver, form_data)
+                        elif fill_choice == '4':
+                            print("\n🎯 Testing Internal Participants section only...")
+                            fill_internal_participants_only(driver, form_data)
                         else:
                             fill_job_creation_form(driver, form_data)
                         print("\n🎉 Form filled successfully!")
