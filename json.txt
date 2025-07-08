@@ -1,0 +1,241 @@
+{
+  "title": "Dash Information",
+  "description": "Schema for capturing job details from a call transcript to be used with an RPA service.",
+  "type": "object",
+  "properties": {
+    "generalInformation": {
+      "type": "object",
+      "title": "General Information",
+      "properties": {
+        "receivedBy": { "type": "string", "title": "Received By" },
+        "jobName": { 
+          "type": "string", 
+          "title": "Job Name",
+          "pattern": "^\\w+,\\s*\\w+$",
+          "description": "Format must be 'last name, first name'."
+        },
+        "reportedBy": { 
+          "type": "string", 
+          "title": "Reported By",
+          "enum": ["Adjuster", "Property Manager", "Property Owner", "General Contractor"]
+        },
+        "referredBy": { 
+          "type": "string", 
+          "title": "Referred By",
+          "description": "This field should always be left blank.",
+          "const": ""
+        },
+        "jobSize": { 
+          "type": "string", 
+          "title": "Job Size",
+          "description": "This field should always be left blank.",
+          "const": ""
+        },
+        "officeName": { 
+          "type": "string", 
+          "title": "Office Name",
+          "enum": ["SPGA, LLC", "SPMGM, LLC", "SPNC, LLC", "SPSC, LLC"]
+        },
+        "dateOfLoss": { 
+          "type": "string", 
+          "title": "Date of Loss",
+          "pattern": "^(0[1-9]|1[0-2])\\/(0[1-9]|[12][0-9]|3[01])\\/\\d{4}$",
+          "description": "Format must be MM/DD/YYYY."
+        },
+        "lossCategory": { 
+          "type": "string", 
+          "title": "Loss Category",
+          "enum": ["Residential", "Commercial", "Multi-Family", "Government"]
+        },
+        "environmentalCode": { 
+          "type": "string", 
+          "title": "Environmental Code",
+          "const": "Select Mitigation"
+        },
+        "catReference": { 
+          "type": "string", 
+          "title": "CAT Reference",
+          "description": "This field should always be left blank.",
+          "const": ""
+        },
+        "priority": { 
+          "type": "string", 
+          "title": "Priority",
+          "enum": ["Low", "Medium", "High"]
+        },
+        "lossType": { 
+          "type": "string", 
+          "title": "Loss Type",
+          "enum": ["Bio-Hazard", "Fire", "General Repairs", "Mold", "Odor", "Storm", "Trauma", "Vandalism", "Vehicle Impact", "Water"]
+        },
+        "secondaryLossType": { 
+          "type": "string", 
+          "title": "Secondary Loss Type",
+          "enum": ["Animal", "Bio-hazard", "Blood", "Broken Glass", "Carpet Cleaning", "Chemical", "Cooking", "Drain Line", "Duct Cleaning", "Electrical", "Fire", "Flood", "General Cleaning", "Graffiti", "Hail Damage", "Hoardding", "Hurricane", "Lightning", "Mold", "Other", "Overflow", "Pathogen/COVID", "Pipe", "Previous Leak", "Slab Leak", "Smoke", "Storm", "Supply Line", "Toilet", "Tornado", "Tree on Structure", "Unknown", "Vehicle", "Water", "Weight of Snow and Ice", "Wild Fire", "Wind Damage"]
+        },
+        "sourceOfLoss": { 
+          "type": "string", 
+          "title": "Source Of Loss",
+          "enum": [
+            "Air Conditioner", "Air Conditioning Condenser Line", "Air Conditioning Drain Pan", "Aircraft", "Angle Stop", "Arson", "Bath tub", "Bidet", "Blocked Rain Gutter", "Boat", "Candle", "Car", "Chimney", "Cigarette", "Clogged Drain", "Clogged Toilet", "Cold Water Supply Line", "Dishwasher", "Dishwasher Drain Line", "Dishwasher Supply Line", "Door Leak", "Drain Backup", "Drain Line", "Dryer", "Dryer Vent", "Electrical", "Falling Object", "Fire Hydrant", "Fire Sprinkler", "Fireplace", "Fish Tank", "Flood", "Frozen Pipe Burst", "Furnace", "Garbage Disposal", "Ground Surface Water", "Hose Bib", "Hot Water Supply Line", "Hurricane", "HVAC", "HVAC Drain Line", "HVAC Freeze", "HVAC Pan Overflow", "HVAC Pump", "HVAC/AC Unit", "Ice Maker Supply Line", "Instant Water Heater", "Landscape Irrigation", "Landslide", "Lightning", "MethLab", "Microwave", "Mine Subsidence", "Mudslide", "Oil Rags", "Other", "Patio Drain", "Pipe Break", "Pipe Leak", "Plumbing", "Pool System", "Pressure Regulator", "Refrigerator", "Refrigerator Supply Line", "Reverse Osmosis System", "Roof", "Roof Drain", "Roof Leak", "Septic System", "Sewer", "Shower", "Shower Cartridge", "Shower Drain Line", "Shower Head", "Shower Pan", "Shower Supply Line", "Shower/Tub Overflow", "Sink", "Sink Drain Line", "Sink hole", "Sink Overflow", "Sink Supply Line", "Slab LeaK", "Small Appliance", "Snow", "Soft Clog Overflow", "Space Heater", "Sprinkler System", "Steam System", "Stove Oven", "Strong Winds", "Sump Pump Failure", "Supply Line", "Toilet", "Toilet Drain Line", "Toilet Overflow", "Toilet Supply Line", "Toilet Tank", "Tornado", "Tree", "Tree Fall", "Truck", "Unknown", "Vandalism", "Vehicle", "Vehicle Impact", "Washing Machine", "Washing Machine Drain Line", "Washing Machine Supply Line", "Water Filter", "Water Heater", "Water Heater Supply Line", "Water Intrusion", "Water Logged", "Water Main", "Wildfire", "Wind-Driven Rain", "Window Leak"
+          ]
+        }
+      },
+      "required": ["dateOfLoss", "environmentalCode"]
+    },
+    "customerInformation": {
+      "type": "object",
+      "title": "Customer Information",
+      "properties": {
+        "customerType": { "type": "string", "enum": ["Individual", "Company"] },
+        "isSameAsJobAddress": { "type": "boolean", "title": "Same as Job Address" },
+        "customer": { "type": "string", "title": "Customer", "description": "This field is not used.", "const": "" },
+        "title": { "type": "string", "title": "Title", "description": "This field is not used.", "const": "" },
+        "firstName": { "type": "string", "title": "First Name" },
+        "lastName": { "type": "string", "title": "Last Name" },
+        "email": { "type": "string", "format": "email", "title": "E-Mail" },
+        "secondaryEmail": { "type": "string", "format": "email", "title": "Secondary E-Mail", "description": "This field should always be left blank.", "const": "" },
+        "address": { "type": "string", "title": "Address" },
+        "zipCode": { "type": "string", "title": "ZIP/Postal Code" },
+        "city": { "type": "string", "title": "City" },
+        "countyRegion": { "type": "string", "title": "County/Region" },
+        "country": { "type": "string", "title": "Country" },
+        "stateProvince": { "type": "string", "title": "State/Province" },
+        "mainPhoneNumber": {
+          "type": "object",
+          "properties": {
+            "number": { 
+              "type": "string",
+              "pattern": "^\\d{1}-\\d{3}-\\d{3}-\\d{4}$",
+              "description": "Format must be X-XXX-XXX-XXXX."
+            },
+            "type": { "type": "string", "enum": ["Business", "Mobile", "Home", "Fax", "Other"] }
+          }
+        }
+      },
+      "required": ["lastName", "zipCode", "city", "stateProvince", "mainPhoneNumber"]
+    },
+    "jobAddressInformation": {
+      "type": "object",
+      "title": "Job Address Information",
+       "properties": {
+        "isSameAsCustomerAddress": { "type": "boolean", "title": "Same as Customer Address", "const": true },
+        "firstName": { "type": "string", "title": "First Name", "const": "" },
+        "lastName": { "type": "string", "title": "Last Name", "const": "" },
+        "address": { "type": "string", "title": "Address", "const": "" },
+        "zipCode": { "type": "string", "title": "ZIP/Postal Code", "const": "" },
+        "city": { "type": "string", "title": "City", "const": "" },
+        "countyRegion": { "type": "string", "title": "County/Region", "const": "" },
+        "country": { "type": "string", "title": "Country", "const": "" },
+        "stateProvince": { "type": "string", "title": "State/Province", "const": "" },
+        "mainPhoneNumber": {
+          "type": "object",
+          "properties": {
+            "number": { "type": "string", "const": "" },
+            "type": { "type": "string", "enum": ["Business", "Mobile", "Home", "Fax", "Other"] }
+          }
+        }
+      }
+    },
+    "internalParticipants": {
+      "type": "object",
+      "title": "Internal Participants",
+      "properties": {
+        "estimator": { "type": "string", "description": "The name to be selected from the dropdown." },
+        "coordinator": { "type": "string" },
+        "supervisor": { "type": "string", "description": "The name to be selected from the dropdown." },
+        "foreman": { "type": "string", "description": "The name to be selected from the dropdown." },
+        "accounting": { "type": "string", "description": "The name to be selected from the dropdown." },
+        "marketing": { "type": "string" },
+        "dispatcher": { "type": "string" },
+        "naAdministrator": { "type": "string" },
+        "naFieldAccountsManager": { "type": "string" }
+      }
+    },
+    "externalParticipants": {
+      "type": "object",
+      "title": "External Participants",
+      "properties": {
+        "brokerAgent": { "type": "string" },
+        "brokerAgentContact": { "type": "string" },
+        "insuranceCarrier": { "type": "string" },
+        "primaryAdjuster": { "type": "string" },
+        "primaryFieldAdjuster": { "type": "string" },
+        "propertyManagement": { "type": "string" },
+        "propertyManagementContact": { "type": "string" },
+        "contractorCompany": { "type": "string" },
+        "contractorContact": { "type": "string" },
+        "independentAdjustingFirm": { "type": "string" },
+        "independentAdjusterContact": { "type": "string" },
+        "publicAdjustingFirm": { "type": "string" },
+        "publicAdjusterContact": { "type": "string" },
+        "primaryMortgage": { "type": "string" },
+        "secondaryMortgage": { "type": "string" },
+        "tpaCompany": { "type": "string" },
+        "tpa": { "type": "string" },
+        "billToCompany": { "type": "string" },
+        "billToContact": { "type": "string" },
+        "secondaryContact": { "type": "string" },
+        "businessContact": { "type": "string" }
+      }
+    },
+    "policyInformation": {
+      "type": "object",
+      "title": "Policy Information",
+      "properties": {
+        "claimNumber": { "type": "string" },
+        "fileNumber": { "type": "string" },
+        "policyNumber": { "type": "string" },
+        "yearBuilt": { "type": "integer" },
+        "policyStartDate": { "type": "string", "format": "date" },
+        "policyExpirationDate": { "type": "string", "format": "date" }
+      }
+    },
+    "division": {
+      "type": "object",
+      "title": "Division",
+      "properties": {
+        "servicesSelected": {
+          "type": "array",
+          "title": "Selected Services",
+          "items": {
+            "type": "string",
+            "enum": ["Temporary repairs", "Water Mitigation", "Reconstruction", "Structure", "Contents", "Roofing", "General Cleaning", "Mold"]
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      },
+      "required": ["servicesSelected"]
+    },
+    "paymentServices": {
+      "type": "object",
+      "title": "Payment Services",
+      "description": "This entire section should be left blank.",
+      "properties": {
+        "deductibleRequired": { "type": "string", "const": "" },
+        "amount": { "type": "number", "const": 0 },
+        "collectWhen": { "type": "string", "const": "" },
+        "dwellingLimits": { "type": "number", "const": 0 },
+        "contentsLimits": { "type": "number", "const": 0 },
+        "otherStructuresLimits": { "type": "number", "const": 0 },
+        "selfPay": { "type": "boolean", "const": false }
+      }
+    },
+    "lossDescriptionAndSpecialInstruction": {
+      "type": "object",
+      "title": "Loss Description & Special Instruction",
+      "properties": {
+        "lossDescription": { "type": "string", "maxLength": 1024, "description": "Enter the call summary here." },
+        "specialInstructions": { "type": "string", "maxLength": 1024 },
+        "roomsAffected": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "For the UI, double-click to move the affected rooms."
+        }
+      }
+    }
+  },
+  "required": ["division"]
+}
+
