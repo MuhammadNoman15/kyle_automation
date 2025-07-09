@@ -608,6 +608,114 @@ def fill_telerik_date_field(driver, wait, field_id, date_value, field_name=""):
         print(f"❌ Error filling Telerik date {field_name}: {str(e)}")
         return False
 
+def fill_telerik_masked_phone_field(driver, wait, field_id, phone_value, field_name=""):
+    """Fill a Telerik RadMaskedTextBox phone field with proper formatting"""
+    if not phone_value:
+        return False
+        
+    try:
+        print(f"    📞 Attempting to fill Telerik masked phone field: {field_name}")
+        
+        # Clean the phone number - remove any existing formatting
+        clean_phone = ''.join(filter(str.isdigit, str(phone_value)))
+        print(f"    🔍 Cleaned phone number: {clean_phone}")
+        
+        # Format the phone number to match the mask _-___-___-____
+        if len(clean_phone) == 11:  # 1-XXX-XXX-XXXX format
+            formatted_phone = f"{clean_phone[0]}-{clean_phone[1:4]}-{clean_phone[4:7]}-{clean_phone[7:11]}"
+        elif len(clean_phone) == 10:  # XXX-XXX-XXXX format (missing country code)
+            formatted_phone = f"1-{clean_phone[0:3]}-{clean_phone[3:6]}-{clean_phone[6:10]}"
+        else:
+            # Try to use the original value if it doesn't match expected lengths
+            formatted_phone = str(phone_value)
+        
+        print(f"    📞 Formatted phone: {formatted_phone}")
+        
+        # Method 1: Try Telerik RadMaskedTextBox API
+        try:
+            script = f"$find('{field_id}').set_value('{formatted_phone}');"
+            driver.execute_script(script)
+            print(f"✅ Set Telerik masked phone {field_name} (API): {formatted_phone}")
+            return True
+        except Exception as e:
+            print(f"    ⚠️ Telerik API method failed: {str(e)}")
+        
+        # Method 2: Try direct input with clear and send_keys
+        try:
+            phone_field = wait.until(EC.presence_of_element_located((By.ID, field_id)))
+            if phone_field.is_displayed() and phone_field.is_enabled():
+                # Clear the field first
+                phone_field.clear()
+                time.sleep(0.5)
+                
+                # Send the formatted phone number
+                phone_field.send_keys(formatted_phone)
+                
+                # Trigger change events to ensure the field recognizes the input
+                driver.execute_script(f"document.getElementById('{field_id}').dispatchEvent(new Event('change'));")
+                driver.execute_script(f"document.getElementById('{field_id}').dispatchEvent(new Event('keyup'));")
+                
+                print(f"✅ Set Telerik masked phone {field_name} (Direct): {formatted_phone}")
+                return True
+        except Exception as e:
+            print(f"    ⚠️ Direct input method failed: {str(e)}")
+        
+        # Method 3: Try JavaScript with direct value assignment and trigger events
+        try:
+            script = f"""
+            var field = document.getElementById('{field_id}');
+            field.value = '{formatted_phone}';
+            field.dispatchEvent(new Event('input'));
+            field.dispatchEvent(new Event('change'));
+            field.dispatchEvent(new Event('keyup'));
+            """
+            driver.execute_script(script)
+            print(f"✅ Set Telerik masked phone {field_name} (JS + Events): {formatted_phone}")
+            return True
+        except Exception as e:
+            print(f"    ⚠️ JS + Events method failed: {str(e)}")
+        
+        # Method 4: Try to use the RadMaskedTextBox's set_value method with base ID
+        try:
+            # Check if there's a wrapper and get base ID
+            base_id = field_id
+            if '_' in field_id:
+                # Try without any suffix
+                base_id = field_id.split('_')[0] + '_' + '_'.join(field_id.split('_')[1:-1])
+            
+            script = f"$find('{base_id}').set_value('{formatted_phone}');"
+            driver.execute_script(script)
+            print(f"✅ Set Telerik masked phone {field_name} (Base ID): {formatted_phone}")
+            return True
+        except Exception as e:
+            print(f"    ⚠️ Base ID method failed: {str(e)}")
+        
+        # Method 5: Try character-by-character input to work with the mask
+        try:
+            phone_field = wait.until(EC.presence_of_element_located((By.ID, field_id)))
+            if phone_field.is_displayed() and phone_field.is_enabled():
+                # Clear the field
+                phone_field.clear()
+                time.sleep(0.5)
+                
+                # Send only the digits, let the mask format them
+                phone_field.send_keys(clean_phone)
+                
+                # Trigger events
+                driver.execute_script(f"document.getElementById('{field_id}').dispatchEvent(new Event('change'));")
+                
+                print(f"✅ Set Telerik masked phone {field_name} (Digits Only): {clean_phone}")
+                return True
+        except Exception as e:
+            print(f"    ⚠️ Digits-only method failed: {str(e)}")
+            
+        print(f"❌ Could not fill Telerik masked phone field: {field_name}")
+        return False
+        
+    except Exception as e:
+        print(f"❌ Error filling Telerik masked phone {field_name}: {str(e)}")
+        return False
+
 def fill_date_field(driver, wait, field_id, date_value, field_name=""):
     """Fill a date field by ID"""
     if not date_value:
@@ -681,6 +789,7 @@ def fill_customer_information(driver, wait, data):
     print("🎯 Filling Customer Information section with correct field IDs...")
     
     # Handle customer type radio buttons
+    customer_type = 'Individual'  # Default
     if 'customerType' in data:
         customer_type = data['customerType']
         if customer_type == 'Individual':
@@ -692,9 +801,19 @@ def fill_customer_information(driver, wait, data):
             radio_button = wait.until(EC.element_to_be_clickable((By.ID, radio_id)))
             radio_button.click()
             print(f"✅ Selected customer type: {customer_type}")
-            time.sleep(1)  # Wait for form to update
+            time.sleep(2)  # Wait for form to update and show appropriate fields
         except Exception as e:
             print(f"❌ Error selecting customer type: {str(e)}")
+    
+    # Handle different field mappings based on customer type
+    if customer_type == 'Individual':
+        fill_individual_customer_fields(driver, wait, data)
+    else:
+        fill_company_customer_fields(driver, wait, data)
+
+def fill_individual_customer_fields(driver, wait, data):
+    """Fill Individual Customer specific fields"""
+    print("👤 Filling Individual Customer fields...")
     
     # CORRECT Field mappings based on actual HTML source code for Individual Customer
     field_mappings = {
@@ -712,7 +831,7 @@ def fill_customer_information(driver, wait, data):
         'stateProvince': 'ctl00_ContentPlaceHolder1_JobParentInformation_DropDown_State_Input'
     }
     
-    # Handle "Same as Job Address" checkbox
+    # Handle "Same as Job Address" checkbox for Individual Customer
     if 'isSameAsJobAddress' in data and data['isSameAsJobAddress']:
         fill_checkbox_field(driver, wait, 'ctl00_ContentPlaceHolder1_JobParentInformation_CheckBox_SameAsIndividualLossAddress', 
                            data['isSameAsJobAddress'], 'Same as Job Address')
@@ -720,7 +839,7 @@ def fill_customer_information(driver, wait, data):
     for field_name, field_id in field_mappings.items():
         if field_name in data and data[field_name]:
             value = data[field_name]
-            print(f"  🔍 Processing Customer field: {field_name} = {value}")
+            print(f"  🔍 Processing Individual Customer field: {field_name} = {value}")
             
             if field_name == 'title':
                 # Handle title dropdown tree (complex control)
@@ -733,29 +852,95 @@ def fill_customer_information(driver, wait, data):
             elif field_name in ['firstName', 'lastName', 'email', 'secondaryEmail', 'zipCode', 'city']:
                 fill_telerik_text_field(driver, wait, field_id, value, field_name)
     
-    # Handle phone numbers with correct IDs
+    # Handle phone numbers for Individual Customer
     if 'mainPhoneNumber' in data:
         phone_data = data['mainPhoneNumber']
         if 'number' in phone_data and phone_data['number']:
-            fill_text_field(driver, wait, 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_MainPhone', 
+            fill_telerik_masked_phone_field(driver, wait, 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_MainPhone', 
                           phone_data['number'], 'Main Phone')
         if 'extension' in phone_data and phone_data['extension']:
-            fill_text_field(driver, wait, 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_MainPhoneExt', 
+            fill_telerik_text_field(driver, wait, 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_MainPhoneExt', 
                           phone_data['extension'], 'Main Phone Extension')
+
+def fill_company_customer_fields(driver, wait, data):
+    """Fill Company Customer specific fields (TR_CompanyCustomer)"""
+    print("🏢 Filling Company Customer fields...")
+    
+    # CORRECT Field mappings based on actual HTML source code for Company Customer
+    field_mappings = {
+        'companyCustomer': 'ctl00_ContentPlaceHolder1_JobParentInformation_DropDown_CompanyCustomer_Input',
+        'companyName': 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_CompanyName',
+        'companyEmail': 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_CompanyEmail',
+        'companyAddress': 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_CompanyAddress_Input',
+        'companyZipCode': 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_CompanyZip',
+        'companyCity': 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_CompanyCity',
+        'companyCountyRegion': 'ctl00_ContentPlaceHolder1_JobParentInformation_RadComboBox_CompanyCounty_Input',
+        'companyCountry': 'ctl00_ContentPlaceHolder1_JobParentInformation_DropDown_CompanyCountry_Input',
+        'companyStateProvince': 'ctl00_ContentPlaceHolder1_JobParentInformation_DropDown_CompanyState_Input',
+        'companyCustomerContact': 'ctl00_ContentPlaceHolder1_JobParentInformation_DropDown_CompanyCustomerContact_Input'
+    }
+    
+    # Handle "Same as Job Address" checkbox for Company Customer
+    if 'isSameAsJobAddress' in data and data['isSameAsJobAddress']:
+        fill_checkbox_field(driver, wait, 'ctl00_ContentPlaceHolder1_JobParentInformation_CheckBox_CompanySameAsLossAddress', 
+                           data['isSameAsJobAddress'], 'Same as Company Job Address')
+    
+    for field_name, field_id in field_mappings.items():
+        if field_name in data and data[field_name]:
+            value = data[field_name]
+            print(f"  🔍 Processing Company Customer field: {field_name} = {value}")
+            
+            if field_name in ['companyCustomer', 'companyCountyRegion', 'companyCountry', 'companyStateProvince', 'companyCustomerContact']:
+                fill_telerik_dropdown_field(driver, wait, field_id, value, field_name)
+            elif field_name == 'companyAddress':
+                # Handle RadSearchBox for company address
+                fill_telerik_text_field(driver, wait, field_id, value, field_name)
+            elif field_name in ['companyName', 'companyEmail', 'companyZipCode', 'companyCity']:
+                fill_telerik_text_field(driver, wait, field_id, value, field_name)
+    
+    # Handle phone numbers for Company Customer
+    if 'companyMainPhoneNumber' in data:
+        phone_data = data['companyMainPhoneNumber']
+        if 'number' in phone_data and phone_data['number']:
+            fill_telerik_masked_phone_field(driver, wait, 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_CompanyMainPhone', 
+                          phone_data['number'], 'Company Main Phone')
+        if 'extension' in phone_data and phone_data['extension']:
+            fill_telerik_text_field(driver, wait, 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_CompanyMainPhoneExtension', 
+                          phone_data['extension'], 'Company Main Phone Extension')
+        
+        # Handle phone type selection (Business, Fax, Other dropdowns)
         if 'type' in phone_data and phone_data['type']:
-            # Handle phone type dropdown if needed
-            pass
+            phone_type = phone_data['type']
+            print(f"  📞 Setting phone type to: {phone_type}")
+            # Note: Company customer form uses dropdown selectors for phone type
+            # The actual phone type dropdowns would need specific field IDs if we wanted to set them
+            # For now, we just log the intended phone type
 
 def fill_job_address_information(driver, wait, data):
     """Fill the Job Address Information section"""
     print("🎯 Filling Job Address Information section with correct field IDs...")
     
-    # Handle "Same as Customer Address" checkbox
+    # Determine customer type to use appropriate job address fields
+    customer_type = 'Individual'  # Default
+    if 'customerType' in data:
+        customer_type = data['customerType']
+    
+    # Handle different job address field mappings based on customer type
+    if customer_type == 'Individual':
+        fill_individual_job_address_fields(driver, wait, data)
+    else:
+        fill_company_job_address_fields(driver, wait, data)
+
+def fill_individual_job_address_fields(driver, wait, data):
+    """Fill Individual Customer Job Address fields"""
+    print("🏠 Filling Individual Customer Job Address fields...")
+    
+    # Handle "Same as Customer Address" checkbox for Individual
     if 'isSameAsCustomerAddress' in data and data['isSameAsCustomerAddress']:
         fill_checkbox_field(driver, wait, 'ctl00_ContentPlaceHolder1_JobParentInformation_CheckBox_SameIndividualAddress', 
                            data['isSameAsCustomerAddress'], 'Same as Customer Address')
     
-    # CORRECT Field mappings based on actual HTML source code for Job Address Information
+    # CORRECT Field mappings based on actual HTML source code for Individual Job Address Information
     field_mappings = {
         'firstName': 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_FirstNameLoss',
         'lastName': 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_LastNameLoss',
@@ -770,7 +955,7 @@ def fill_job_address_information(driver, wait, data):
     for field_name, field_id in field_mappings.items():
         if field_name in data and data[field_name]:
             value = data[field_name]
-            print(f"  🔍 Processing Job Address field: {field_name} = {value}")
+            print(f"  🔍 Processing Individual Job Address field: {field_name} = {value}")
             
             if field_name in ['countyRegion', 'country', 'stateProvince']:
                 fill_telerik_dropdown_field(driver, wait, field_id, value, f"Loss {field_name}")
@@ -781,15 +966,77 @@ def fill_job_address_information(driver, wait, data):
                 # Handle text fields
                 fill_telerik_text_field(driver, wait, field_id, value, f"Loss {field_name}")
     
-    # Handle phone numbers for Job Address
+    # Handle phone numbers for Individual Job Address
     if 'mainPhoneNumber' in data:
         phone_data = data['mainPhoneNumber']
         if 'number' in phone_data and phone_data['number']:
-            fill_text_field(driver, wait, 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_MainPhoneLoss', 
+            fill_telerik_masked_phone_field(driver, wait, 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_MainPhoneLoss', 
                           phone_data['number'], 'Job Address Main Phone')
         if 'extension' in phone_data and phone_data['extension']:
-            fill_text_field(driver, wait, 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_MainPhoneLossExtension', 
+            fill_telerik_text_field(driver, wait, 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_MainPhoneLossExtension', 
                           phone_data['extension'], 'Job Address Main Phone Extension')
+
+def fill_company_job_address_fields(driver, wait, data):
+    """Fill Company Customer Job Address fields (TR_CompanyLossAddress)"""
+    print("🏢 Filling Company Customer Job Address fields...")
+    
+    # Handle "Same as Company Address" checkbox
+    if 'isSameAsCustomerAddress' in data and data['isSameAsCustomerAddress']:
+        fill_checkbox_field(driver, wait, 'ctl00_ContentPlaceHolder1_JobParentInformation_checkBox_SameCompanyAddress', 
+                           data['isSameAsCustomerAddress'], 'Same as Company Customer Address')
+    
+    # Handle company contact selection for job address
+    if 'companyContactSelection' in data:
+        contact_data = data['companyContactSelection']
+        if 'existingContact' in contact_data and contact_data['existingContact']:
+            # Use existing company contact
+            fill_telerik_dropdown_field(driver, wait, 'ctl00_ContentPlaceHolder1_JobParentInformation_DropDown_CompanyFirstNameLoss_Input', 
+                                       contact_data['existingContact'], 'Company Contact Selection')
+        
+        # Handle new contact information if provided
+        if 'newContactFirstName' in contact_data and contact_data['newContactFirstName']:
+            fill_telerik_text_field(driver, wait, 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_CompanyContactFirstName', 
+                                   contact_data['newContactFirstName'], 'New Company Contact First Name')
+        if 'newContactLastName' in contact_data and contact_data['newContactLastName']:
+            fill_telerik_text_field(driver, wait, 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_CompanyContactLastName', 
+                                   contact_data['newContactLastName'], 'New Company Contact Last Name')
+    
+    # CORRECT Field mappings for Company Job Address Information (TR_CompanyLossAddress)
+    field_mappings = {
+        'companyJobAddress': 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_CompanyAddressLoss_Input',
+        'companyJobZipCode': 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_CompanyZipLoss',
+        'companyJobCity': 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_CompanyCityLoss',
+        'companyJobCountyRegion': 'ctl00_ContentPlaceHolder1_JobParentInformation_RadComboBox_CompanyLossCounty_Input',
+        'companyJobCountry': 'ctl00_ContentPlaceHolder1_JobParentInformation_DropDown_CompanyCountryLoss_Input',
+        'companyJobStateProvince': 'ctl00_ContentPlaceHolder1_JobParentInformation_DropDown_CompanyStateLoss_Input'
+    }
+    
+    for field_name, field_id in field_mappings.items():
+        if field_name in data and data[field_name]:
+            value = data[field_name]
+            print(f"  🔍 Processing Company Job Address field: {field_name} = {value}")
+            
+            if field_name in ['companyJobCountyRegion', 'companyJobCountry', 'companyJobStateProvince']:
+                fill_telerik_dropdown_field(driver, wait, field_id, value, f"Company Job {field_name}")
+            elif field_name == 'companyJobAddress':
+                # Handle RadSearchBox for company job address
+                fill_telerik_text_field(driver, wait, field_id, value, f"Company Job {field_name}")
+            else:
+                # Handle text fields
+                fill_telerik_text_field(driver, wait, field_id, value, f"Company Job {field_name}")
+    
+    # Handle phone numbers for Company Job Address
+    phone_types = ['MainPhone', 'BusinessPhone', 'FaxPhone', 'OtherPhone']
+    for phone_type in phone_types:
+        phone_key = f'company{phone_type}Loss'
+        if phone_key in data:
+            phone_data = data[phone_key]
+            if 'number' in phone_data and phone_data['number']:
+                phone_field_id = f'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_Company{phone_type}Loss'
+                fill_telerik_masked_phone_field(driver, wait, phone_field_id, phone_data['number'], f'Company Job {phone_type}')
+            if 'extension' in phone_data and phone_data['extension']:
+                extension_field_id = f'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_Company{phone_type}LossExtension'
+                fill_telerik_text_field(driver, wait, extension_field_id, phone_data['extension'], f'Company Job {phone_type} Extension')
 
 def fill_internal_participants(driver, wait, data):
     """Fill the Internal Participants section"""
@@ -1316,6 +1563,9 @@ def create_sample_form_data():
     """
     Create sample form data based on the JSON schema
     You can modify this data or load it from an external JSON file
+    
+    This function returns Individual Customer data by default.
+    Use create_sample_company_form_data() for Company Customer data.
     """
     return {
         "generalInformation": {
@@ -1356,6 +1606,7 @@ def create_sample_form_data():
             }
         },
         "jobAddressInformation": {
+            "customerType": "Individual",
             "isSameAsCustomerAddress": False,
             "firstName": "John",
             "lastName": "Smith",
@@ -1442,6 +1693,158 @@ def create_sample_form_data():
         }
     }
 
+def create_sample_company_form_data():
+    """
+    Create sample form data for Company Customer scenario
+    """
+    return {
+        "generalInformation": {
+            "receivedBy": "Kyle McDougall",
+            "jobName": "ABC Construction Corp - Fire Damage",
+            "reportedBy": "Property Manager",
+            "referredBy": "Lewis, A.D.",
+            "jobSize": "Large",
+            "officeName": "SPSC, LLC",
+            "dateOfLoss": "12/15/2024",
+            "lossCategory": "Commercial",
+            "environmentalCode": "Mitigation",
+            "catReference": "",
+            "priority": "High",
+            "lossType": "General Repairs",
+            "secondaryLossType": "Smoke Damage",
+            "sourceOfLoss": "Electrical Fire"
+        },
+        "customerInformation": {
+            "customerType": "Company",
+            "isSameAsJobAddress": False,
+            "companyCustomer": "",
+            "companyName": "ABC Construction Corporation",
+            "companyEmail": "contact@abcconstruction.com",
+            "companyAddress": "789 Corporate Blvd",
+            "companyZipCode": "30309",
+            "companyCity": "Atlanta",
+            "companyCountyRegion": "Fulton County",
+            "companyCountry": "USA",
+            "companyStateProvince": "Georgia",
+            "companyCustomerContact": "Michael Johnson",
+            "companyMainPhoneNumber": {
+                "number": "1-404-555-9000",
+                "extension": "100",
+                "type": "Business"
+            }
+        },
+        "jobAddressInformation": {
+            "customerType": "Company",
+            "isSameAsCustomerAddress": False,
+            "companyContactSelection": {
+                "existingContact": "Michael Johnson",
+                "newContactFirstName": "Sarah",
+                "newContactLastName": "Wilson"
+            },
+            "companyJobAddress": "1000 Industrial Park Road",
+            "companyJobZipCode": "30309",
+            "companyJobCity": "Atlanta",
+            "companyJobCountyRegion": "Fulton County",
+            "companyJobCountry": "USA",
+            "companyJobStateProvince": "Georgia",
+            "companyMainPhoneLoss": {
+                "number": "1-404-555-8000",
+                "extension": "300",
+                "type": "Business"
+            },
+            "companyBusinessPhoneLoss": {
+                "number": "1-404-555-8001",
+                "extension": "400",
+                "type": "Business"
+            }
+        },
+        "internalParticipants": {
+            "estimator": "Kyle McDougall",
+            "coordinator": "Sarah Johnson",
+            "supervisor": "Mike Wilson",
+            "foreman": "Tom Rodriguez",
+            "accounting": "Lisa Chen",
+            "marketing": "Adams, Sherri",
+            "dispatcher": "Adams, Sherri",
+            "naAdministrator": "Adams, Sherri",
+            "naFieldAccountsManager": "Adams, Sherri"
+        },
+        "externalParticipants": {
+            "brokerAgent": "Commercial Insurance Brokers",
+            "brokerAgentContact": "Michael Thompson",
+            "insuranceCarrier": "Commercial Insurance Co.",
+            "primaryAdjuster": "David Smith",
+            "primaryFieldAdjuster": "Jennifer Davis",
+            "propertyManagement": "Corporate Property Management",
+            "propertyManagementContact": "Robert Jones",
+            "contractorCompany": "SERVPRO Construction",
+            "contractorContact": "Amanda Taylor",
+            "independentAdjustingFirm": "Commercial Adjusters Inc.",
+            "independentAdjusterContact": "Mark Wilson",
+            "publicAdjustingFirm": "Public Commercial Adjusters",
+            "publicAdjusterContact": "Lisa Brown",
+            "primaryMortgage": "Commercial Bank",
+            "secondaryMortgage": "Investment Bank",
+            "tpaCompany": "Commercial TPA Services",
+            "tpa": "James Rodriguez",
+            "billToCompany": "ABC Construction Corporation",
+            "billToContact": "Michael Johnson",
+            "secondaryContact": "Sarah Wilson",
+            "businessContact": "David Chen"
+        },
+        "policyInformation": {
+            "claimNumber": "COM-2024-98765",
+            "fileNumber": "COMM-FILE-001",
+            "policyNumber": "COMM-POL-123456789",
+            "yearBuilt": 1985,
+            "policyStartDate": "01/01/2024",
+            "policyExpirationDate": "01/01/2025"
+        },
+        "division": {
+            "servicesSelected": [
+                "Fire Damage Restoration",
+                "Smoke Damage Cleanup",
+                "Structure",
+                "Reconstruction"
+            ]
+        },
+        "paymentServices": {
+            "deductibleRequired": "Yes",
+            "amount": "5000",
+            "collectWhen": "Upon Completion",
+            "dwellingLimits": "500000",
+            "contentsLimits": "250000",
+            "otherStructuresLimits": "50000",
+            "selfPay": False
+        },
+        "lossDescriptionSection": {
+            "lossDescription": "Electrical fire in the main office building caused extensive smoke and fire damage. Multiple floors affected with damage to equipment, furniture, and building structure. Emergency fire suppression system activated successfully.",
+            "specialInstructions": "Building requires safety inspection before entry. Coordinate with facility manager for access. Work must be completed outside of business hours (after 6 PM). Special handling required for sensitive computer equipment recovery.",
+            "roomsAffected": [
+                "Office",
+                "Conference Room",
+                "Storage Room",
+                "Hallway"
+            ]
+        }
+    }
+
+def get_customer_type_choice():
+    """
+    Ask user to choose between Individual and Company customer types
+    """
+    while True:
+        choice = input("\n🏢 Choose Customer Type:\n1. Individual Customer\n2. Company Customer\nEnter choice (1 or 2): ").strip()
+        
+        if choice == '1':
+            print("📝 Using Individual Customer sample data...")
+            return create_sample_form_data()
+        elif choice == '2':
+            print("🏢 Using Company Customer sample data...")
+            return create_sample_company_form_data()
+        else:
+            print("❌ Invalid choice. Please enter 1 or 2.")
+
 def load_form_data_from_json(json_file_path):
     """
     Load form data from a JSON file
@@ -1451,6 +1854,10 @@ def load_form_data_from_json(json_file_path):
     
     Returns:
         Dictionary containing form data
+    
+    Note: Use these example files as templates:
+        - form_data_individual_example.json (for Individual Customer)
+        - form_data_company_example.json (for Company Customer)
     """
     import json
     
@@ -1461,6 +1868,9 @@ def load_form_data_from_json(json_file_path):
         return data
     except FileNotFoundError:
         print(f"❌ JSON file not found: {json_file_path}")
+        print("📋 Available example files:")
+        print("   - form_data_individual_example.json (Individual Customer)")
+        print("   - form_data_company_example.json (Company Customer)")
         print("Using sample data instead...")
         return create_sample_form_data()
     except json.JSONDecodeError as e:
@@ -1883,13 +2293,16 @@ def servpro_login():
                     data_source = input("\n📋 Choose data source:\n1. Sample data\n2. Load from JSON file\nEnter choice (1 or 2): ").strip()
                     
                     if data_source == '2':
-                        json_file = input("📁 Enter JSON file path (or press Enter for 'form_data.json'): ").strip()
+                        print("📋 Example files available:")
+                        print("   - form_data_individual_example.json (Individual Customer)")
+                        print("   - form_data_company_example.json (Company Customer)")
+                        json_file = input("📁 Enter JSON file path (or press Enter for 'form_data_individual_example.json'): ").strip()
                         if not json_file:
-                            json_file = 'form_data.json'
+                            json_file = 'form_data_individual_example.json'
                         form_data = load_form_data_from_json(json_file)
                     else:
                         print("📝 Using sample data...")
-                        form_data = create_sample_form_data()
+                        form_data = get_customer_type_choice()
                     
                     try:
                         if fill_choice == '2':

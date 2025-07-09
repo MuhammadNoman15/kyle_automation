@@ -1,0 +1,129 @@
+{
+  "_comment": "SERVPRO Job Creation Form Data Example - Individual Customer Format",
+  "_note": "This example shows the field structure for Individual Customer type",
+  "generalInformation": {
+    "receivedBy": "Kyle McDougall",
+    "jobName": "Smith, John - Water Damage",
+    "reportedBy": "Property Owner",
+    "referredBy": "Lewis, A.D.",
+    "jobSize": "Medium",
+    "officeName": "SPSC, LLC",
+    "dateOfLoss": "12/15/2024",
+    "lossCategory": "Residential",
+    "environmentalCode": "Mitigation",
+    "catReference": "",
+    "priority": "High",
+    "lossType": "General Repairs",
+    "secondaryLossType": "Mold",
+    "sourceOfLoss": "Pipe Break"
+  },
+  "customerInformation": {
+    "_comment": "Individual Customer fields",
+    "customerType": "Individual",
+    "isSameAsJobAddress": false,
+    "customer": "",
+    "title": "Mr.",
+    "firstName": "John",
+    "lastName": "Smith",
+    "email": "john.smith@email.com",
+    "secondaryEmail": "john.alt@email.com",
+    "address": "123 Main Street",
+    "zipCode": "30309",
+    "city": "Atlanta",
+    "countyRegion": "Fulton County",
+    "country": "USA",
+    "stateProvince": "Georgia",
+    "mainPhoneNumber": {
+      "number": "1-404-555-1234",
+      "extension": "",
+      "type": "Mobile"
+    }
+  },
+  "jobAddressInformation": {
+    "_comment": "Individual Job Address fields",
+    "customerType": "Individual",
+    "isSameAsCustomerAddress": false,
+    "firstName": "John",
+    "lastName": "Smith",
+    "address": "456 Loss Address Street",
+    "zipCode": "30309",
+    "city": "Atlanta",
+    "countyRegion": "Fulton County",
+    "country": "USA",
+    "stateProvince": "Georgia",
+    "mainPhoneNumber": {
+      "number": "1-404-555-5678",
+      "extension": "",
+      "type": "Home"
+    }
+  },
+  "internalParticipants": {
+    "estimator": "Kyle McDougall",
+    "coordinator": "Sarah Johnson",
+    "supervisor": "Mike Wilson",
+    "foreman": "Tom Rodriguez",
+    "accounting": "Lisa Chen",
+    "marketing": "Adams, Sherri",
+    "dispatcher": "Adams, Sherri",
+    "naAdministrator": "Adams, Sherri",
+    "naFieldAccountsManager": "Adams, Sherri"
+  },
+  "externalParticipants": {
+    "brokerAgent": "ABC Insurance Brokers",
+    "brokerAgentContact": "John Smith",
+    "insuranceCarrier": "State Farm",
+    "primaryAdjuster": "Mark Davis",
+    "primaryFieldAdjuster": "Sarah Johnson",
+    "propertyManagement": "Property Management Co.",
+    "propertyManagementContact": "Mike Wilson",
+    "contractorCompany": "SERVPRO Construction",
+    "contractorContact": "Tom Rodriguez",
+    "independentAdjustingFirm": "Independent Adjusters Inc.",
+    "independentAdjusterContact": "Lisa Chen",
+    "publicAdjustingFirm": "Public Adjusters LLC",
+    "publicAdjusterContact": "David Brown",
+    "primaryMortgage": "Wells Fargo",
+    "secondaryMortgage": "Chase Bank",
+    "tpaCompany": "TPA Services Inc.",
+    "tpa": "Amanda Taylor",
+    "billToCompany": "Billing Company LLC",
+    "billToContact": "Robert Jones",
+    "secondaryContact": "Jennifer Davis",
+    "businessContact": "Michael Thompson"
+  },
+  "policyInformation": {
+    "claimNumber": "SF-2024-12345",
+    "fileNumber": "FILE-001",
+    "policyNumber": "POL-987654321",
+    "yearBuilt": 1995,
+    "policyStartDate": "01/01/2024",
+    "policyExpirationDate": "01/01/2025"
+  },
+  "division": {
+    "servicesSelected": [
+      "Water Mitigation",
+      "Structure",
+      "Mold",
+      "Reconstruction"
+    ]
+  },
+  "paymentServices": {
+    "deductibleRequired": "Yes",
+    "amount": "1000",
+    "collectWhen": "Upon Completion",
+    "dwellingLimits": "250000",
+    "contentsLimits": "125000",
+    "otherStructuresLimits": "25000",
+    "selfPay": false
+  },
+  "lossDescriptionSection": {
+    "lossDescription": "Water damage in kitchen area due to pipe burst. Extensive damage to flooring, cabinets, and drywall. Initial moisture readings indicate potential secondary damage. Emergency water extraction completed.",
+    "specialInstructions": "Please wear protective equipment when entering affected area. Customer requests minimal disruption during business hours (9 AM - 5 PM). Contact property manager before accessing basement utilities.",
+    "roomsAffected": [
+      "Kitchen",
+      "Basement",
+      "Living Room",
+      "Dining Room"
+    ]
+  }
+} 
