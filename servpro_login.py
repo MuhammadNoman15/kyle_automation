@@ -931,40 +931,40 @@ def fill_division_services(driver, wait, data):
 
 def fill_payment_services(driver, wait, data):
     """Fill Payment Services section"""
-    print("    💰 Filling Payment Services section...")
+    print("🎯 Filling Payment Services section with correct field IDs...")
     
     try:
-        # Map the field IDs for Payment Services section
+        # CORRECT Field mappings based on actual HTML source code
         field_mappings = {
-            'deductibleRequired': 'ctl00_ContentPlaceHolder1_JobParentInformation_radcombobox_DeductibleRequired',
-            'amount': 'ctl00_ContentPlaceHolder1_JobParentInformation_RadTextBox_DeductibleAmount',
-            'collectWhen': 'ctl00_ContentPlaceHolder1_JobParentInformation_radcombobox_CollectWhen',
-            'dwellingLimits': 'ctl00_ContentPlaceHolder1_JobParentInformation_RadTextBox_Dwelling',
-            'contentsLimits': 'ctl00_ContentPlaceHolder1_JobParentInformation_RadTextBox_Contents',
-            'otherStructuresLimits': 'ctl00_ContentPlaceHolder1_JobParentInformation_RadTextBox_OtherStructures',
-            'selfPay': 'ctl00_ContentPlaceHolder1_JobParentInformation_CheckBoxSelfPay'
+            'deductibleRequired': 'ctl00_ContentPlaceHolder1_JobParentInformation_DropDown_DeductibleRequired_Input',
+            'amount': 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_Amount',
+            'collectWhen': 'ctl00_ContentPlaceHolder1_JobParentInformation_DropDown_CollectWhen_Input',
+            'dwellingLimits': 'ctl00_ContentPlaceHolder1_JobParentInformation_textBox_Dwelling',
+            'contentsLimits': 'ctl00_ContentPlaceHolder1_JobParentInformation_textBox_Contents',
+            'otherStructuresLimits': 'ctl00_ContentPlaceHolder1_JobParentInformation_textBox_OtherStructures',
+            'selfPay': 'ctl00_ContentPlaceHolder1_JobParentInformation_SelfPayJobCheckBox'
         }
         
         # Fill fields based on data
         for field_name, field_id in field_mappings.items():
             if field_name in data and data[field_name]:
                 value = data[field_name]
-                print(f"    📝 Processing {field_name}: {value}")
+                print(f"  🔍 Processing Payment Services field: {field_name} = {value}")
                 
                 if field_name in ['deductibleRequired', 'collectWhen']:
-                    # Dropdown fields
+                    # RadComboBox dropdown fields
                     fill_telerik_dropdown_field(driver, wait, field_id, str(value), field_name)
                 elif field_name == 'selfPay':
                     # Checkbox field
                     fill_checkbox_field(driver, wait, field_id, bool(value), field_name)
                 else:
-                    # Text fields
+                    # RadTextBox text fields
                     fill_telerik_text_field(driver, wait, field_id, str(value), field_name)
         
-        print("    ✅ Payment Services section completed")
+        print("✅ Payment Services section completed")
         
     except Exception as e:
-        print(f"    ❌ Error in Payment Services section: {str(e)}")
+        print(f"❌ Error in Payment Services section: {str(e)}")
 
 def fill_loss_description_section(driver, wait, data):
     """Fill Loss Description & Special Instruction section"""
