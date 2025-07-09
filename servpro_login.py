@@ -17,6 +17,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import TimeoutException, NoAlertPresentException
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.action_chains import ActionChains
 
 def get_chrome_version():
     """Get the installed Chrome version"""
@@ -314,6 +315,16 @@ def fill_job_creation_form(driver, form_data):
         if 'division' in form_data:
             print("🔧 Filling Division/Services...")
             fill_division_services(driver, wait, form_data['division'])
+        
+        # Fill Payment Services Section
+        if 'paymentServices' in form_data:
+            print("💰 Filling Payment Services...")
+            fill_payment_services(driver, wait, form_data['paymentServices'])
+        
+        # Fill Loss Description & Special Instruction Section
+        if 'lossDescriptionSection' in form_data:
+            print("📄 Filling Loss Description & Special Instruction...")
+            fill_loss_description_section(driver, wait, form_data['lossDescriptionSection'])
         
         print("✅ Form filling completed successfully!")
         
@@ -907,16 +918,149 @@ def fill_division_services(driver, wait, data):
                                 print(f"    ✅ Selected service: {label_text}")
                             else:
                                 print(f"    ✅ Service already selected: {label_text}")
-                        
+                    
                     except Exception as e:
                         print(f"    ⚠️ Could not process checkbox: {str(e)}")
                         continue
-                        
+        
         except Exception as e:
             print(f"❌ Error finding services table: {str(e)}")
     
     else:
         print("⚠️ No services specified in form data")
+
+def fill_payment_services(driver, wait, data):
+    """Fill Payment Services section"""
+    print("    💰 Filling Payment Services section...")
+    
+    try:
+        # Map the field IDs for Payment Services section
+        field_mappings = {
+            'deductibleRequired': 'ctl00_ContentPlaceHolder1_JobParentInformation_radcombobox_DeductibleRequired',
+            'amount': 'ctl00_ContentPlaceHolder1_JobParentInformation_RadTextBox_DeductibleAmount',
+            'collectWhen': 'ctl00_ContentPlaceHolder1_JobParentInformation_radcombobox_CollectWhen',
+            'dwellingLimits': 'ctl00_ContentPlaceHolder1_JobParentInformation_RadTextBox_Dwelling',
+            'contentsLimits': 'ctl00_ContentPlaceHolder1_JobParentInformation_RadTextBox_Contents',
+            'otherStructuresLimits': 'ctl00_ContentPlaceHolder1_JobParentInformation_RadTextBox_OtherStructures',
+            'selfPay': 'ctl00_ContentPlaceHolder1_JobParentInformation_CheckBoxSelfPay'
+        }
+        
+        # Fill fields based on data
+        for field_name, field_id in field_mappings.items():
+            if field_name in data and data[field_name]:
+                value = data[field_name]
+                print(f"    📝 Processing {field_name}: {value}")
+                
+                if field_name in ['deductibleRequired', 'collectWhen']:
+                    # Dropdown fields
+                    fill_telerik_dropdown_field(driver, wait, field_id, str(value), field_name)
+                elif field_name == 'selfPay':
+                    # Checkbox field
+                    fill_checkbox_field(driver, wait, field_id, bool(value), field_name)
+                else:
+                    # Text fields
+                    fill_telerik_text_field(driver, wait, field_id, str(value), field_name)
+        
+        print("    ✅ Payment Services section completed")
+        
+    except Exception as e:
+        print(f"    ❌ Error in Payment Services section: {str(e)}")
+
+def fill_loss_description_section(driver, wait, data):
+    """Fill Loss Description & Special Instruction section"""
+    print("    📄 Filling Loss Description & Special Instruction section...")
+    
+    try:
+        # Fill Loss Description field
+        if 'lossDescription' in data and data['lossDescription']:
+            loss_desc_id = 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_LossDescription'
+            fill_telerik_text_field(driver, wait, loss_desc_id, data['lossDescription'], "Loss Description")
+        
+        # Fill Special Instructions field
+        if 'specialInstructions' in data and data['specialInstructions']:
+            special_inst_id = 'ctl00_ContentPlaceHolder1_JobParentInformation_TextBox_SpecialIns'
+            fill_telerik_text_field(driver, wait, special_inst_id, data['specialInstructions'], "Special Instructions")
+        
+        # Handle Rooms Affected
+        if 'roomsAffected' in data and data['roomsAffected']:
+            print("    🏠 Processing Rooms Affected...")
+            rooms_to_select = data['roomsAffected']
+            
+            # RadListBox IDs
+            source_listbox_id = 'ctl00_ContentPlaceHolder1_JobParentInformation_SourceRoomAffectedRadListBox'
+            chosen_listbox_id = 'ctl00_ContentPlaceHolder1_JobParentInformation_ChosenRoomAffectedRadListBox'
+            
+            for room_name in rooms_to_select:
+                try:
+                    print(f"    🏠 Selecting room: {room_name}")
+                    
+                    # Find the room item in the source list
+                    room_item_xpath = f"//div[@id='{source_listbox_id}']//li[contains(@class, 'rlbItem')]//span[text()='{room_name}']"
+                    
+                    # Try to find and click the room item
+                    try:
+                        room_item = wait.until(EC.element_to_be_clickable((By.XPATH, room_item_xpath)))
+                        
+                        # Scroll the item into view if needed
+                        driver.execute_script("arguments[0].scrollIntoView(true);", room_item)
+                        time.sleep(0.5)
+                        
+                        # Click the room item to select it
+                        room_item.click()
+                        print(f"    ✅ Selected room: {room_name}")
+                        time.sleep(0.5)
+                        
+                        # Now click the transfer button to move it to the chosen list
+                        transfer_button_xpath = f"//div[@id='{source_listbox_id}']//a[contains(@class, 'rlbTransferFrom')]"
+                        try:
+                            transfer_button = driver.find_element(By.XPATH, transfer_button_xpath)
+                            if transfer_button.is_displayed() and transfer_button.is_enabled():
+                                transfer_button.click()
+                                print(f"    ➡️ Transferred room: {room_name}")
+                                time.sleep(0.5)
+                            else:
+                                print(f"    ⚠️ Transfer button not available for room: {room_name}")
+                        except Exception as e:
+                            print(f"    ⚠️ Could not find transfer button for room {room_name}: {str(e)}")
+                            
+                            # Alternative: Try double-click to transfer
+                            try:
+                                from selenium.webdriver.common.action_chains import ActionChains
+                                action = ActionChains(driver)
+                                action.double_click(room_item).perform()
+                                print(f"    ➡️ Double-clicked to transfer room: {room_name}")
+                                time.sleep(0.5)
+                            except Exception as e2:
+                                print(f"    ⚠️ Double-click transfer failed for room {room_name}: {str(e2)}")
+                    
+                    except Exception as e:
+                        print(f"    ⚠️ Could not find/select room '{room_name}': {str(e)}")
+                        
+                        # Try alternative approach - look for partial text match
+                        try:
+                            partial_room_xpath = f"//div[@id='{source_listbox_id}']//li[contains(@class, 'rlbItem')]//span[contains(text(), '{room_name}')]"
+                            room_item = driver.find_element(By.XPATH, partial_room_xpath)
+                            room_item.click()
+                            print(f"    ✅ Selected room (partial match): {room_name}")
+                            time.sleep(0.5)
+                        except:
+                            print(f"    ❌ Could not find room '{room_name}' in available options")
+                            
+                            # Log available rooms for debugging
+                            try:
+                                available_rooms = driver.find_elements(By.XPATH, f"//div[@id='{source_listbox_id}']//li[contains(@class, 'rlbItem')]//span[@class='rlbText']")
+                                room_names = [room.text for room in available_rooms[:10]]  # Show first 10
+                                print(f"    📋 Available rooms (first 10): {room_names}")
+                            except:
+                                pass
+                
+                except Exception as e:
+                    print(f"    ❌ Error processing room '{room_name}': {str(e)}")
+        
+        print("    ✅ Loss Description & Special Instruction section completed")
+        
+    except Exception as e:
+        print(f"    ❌ Error in Loss Description & Special Instruction section: {str(e)}")
 
 def fill_general_information_only(driver, form_data):
     """
@@ -1108,6 +1252,66 @@ def fill_division_services_only(driver, form_data):
         print(f"❌ Error during Division/Services test: {str(e)}")
         raise
 
+def fill_payment_services_only(driver, form_data):
+    """
+    Fill only the Payment Services section for testing purposes
+    
+    Args:
+        driver: Selenium WebDriver instance
+        form_data: Dictionary containing form data
+    """
+    wait = WebDriverWait(driver, 10)
+    
+    print("🎯 Starting Payment Services section test...")
+    
+    try:
+        # Wait for form to be fully loaded
+        print("⏳ Waiting for form to load...")
+        time.sleep(3)
+        
+        # Fill Payment Services Section
+        if 'paymentServices' in form_data:
+            print("📝 Testing Payment Services section...")
+            fill_payment_services(driver, wait, form_data['paymentServices'])
+        else:
+            print("❌ No payment services data found in form data")
+        
+        print("✅ Payment Services section test completed!")
+        
+    except Exception as e:
+        print(f"❌ Error during Payment Services test: {str(e)}")
+        raise
+
+def fill_loss_description_only(driver, form_data):
+    """
+    Fill only the Loss Description & Special Instruction section for testing purposes
+    
+    Args:
+        driver: Selenium WebDriver instance
+        form_data: Dictionary containing form data
+    """
+    wait = WebDriverWait(driver, 10)
+    
+    print("🎯 Starting Loss Description & Special Instruction section test...")
+    
+    try:
+        # Wait for form to be fully loaded
+        print("⏳ Waiting for form to load...")
+        time.sleep(3)
+        
+        # Fill Loss Description & Special Instruction Section
+        if 'lossDescriptionSection' in form_data:
+            print("📝 Testing Loss Description & Special Instruction section...")
+            fill_loss_description_section(driver, wait, form_data['lossDescriptionSection'])
+        else:
+            print("❌ No Loss Description section data found in form data")
+        
+        print("✅ Loss Description & Special Instruction section test completed!")
+        
+    except Exception as e:
+        print(f"❌ Error during Loss Description section test: {str(e)}")
+        raise
+
 def create_sample_form_data():
     """
     Create sample form data based on the JSON schema
@@ -1215,6 +1419,25 @@ def create_sample_form_data():
                 "Structure",
                 "Mold",
                 "Reconstruction"
+            ]
+        },
+        "paymentServices": {
+            "deductibleRequired": "Yes",
+            "amount": "1000",
+            "collectWhen": "Upon Completion",
+            "dwellingLimits": "250000",
+            "contentsLimits": "125000",
+            "otherStructuresLimits": "25000",
+            "selfPay": False
+        },
+        "lossDescriptionSection": {
+            "lossDescription": "Water damage in kitchen area due to pipe burst. Extensive damage to flooring, cabinets, and drywall. Initial moisture readings indicate potential secondary damage. Emergency water extraction completed.",
+            "specialInstructions": "Please wear protective equipment when entering affected area. Customer requests minimal disruption during business hours (9 AM - 5 PM). Contact property manager before accessing basement utilities.",
+            "roomsAffected": [
+                "Kitchen",
+                "Basement",
+                "Living Room",
+                "Dining Room"
             ]
         }
     }
@@ -1536,7 +1759,7 @@ def servpro_login():
                                         break
                                     except:
                                         continue
-                                
+                    
                                 if not closed:
                                     try:
                                         # Hide with JavaScript
@@ -1544,6 +1767,7 @@ def servpro_login():
                                         print("✅ Hidden popup using JavaScript")
                                         time.sleep(1)
                                         closed = True
+                                        break
                                     except:
                                         continue
                                 
@@ -1653,7 +1877,7 @@ def servpro_login():
                 
                 if fill_form == 'y' or fill_form == 'yes':
                     # Ask for filling preference
-                    fill_choice = input("\n📋 Choose filling option:\n1. Fill entire form\n2. Fill only General Information (for testing)\n3. Fill only Customer Information and Job Address Information (for testing)\n4. Fill only Internal Participants (for testing)\n5. Fill only External Participants (for testing)\n6. Fill only Policy Information (for testing)\n7. Fill only Division/Services (for testing)\nEnter choice (1, 2, 3, 4, 5, 6, or 7): ").strip()
+                    fill_choice = input("\n📋 Choose filling option:\n1. Fill entire form\n2. Fill only General Information (for testing)\n3. Fill only Customer Information and Job Address Information (for testing)\n4. Fill only Internal Participants (for testing)\n5. Fill only External Participants (for testing)\n6. Fill only Policy Information (for testing)\n7. Fill only Division/Services (for testing)\n8. Fill only Payment Services (for testing)\n9. Fill only Loss Description & Special Instruction (for testing)\nEnter choice (1, 2, 3, 4, 5, 6, 7, 8, or 9): ").strip()
                     
                     # Ask for data source
                     data_source = input("\n📋 Choose data source:\n1. Sample data\n2. Load from JSON file\nEnter choice (1 or 2): ").strip()
@@ -1686,6 +1910,12 @@ def servpro_login():
                         elif fill_choice == '7':
                             print("\n🎯 Testing Division/Services section only...")
                             fill_division_services_only(driver, form_data)
+                        elif fill_choice == '8':
+                            print("\n🎯 Testing Payment Services section only...")
+                            fill_payment_services_only(driver, form_data)
+                        elif fill_choice == '9':
+                            print("\n🎯 Testing Loss Description & Special Instruction section only...")
+                            fill_loss_description_only(driver, form_data)
                         else:
                             fill_job_creation_form(driver, form_data)
                         print("\n🎉 Form filled successfully!")

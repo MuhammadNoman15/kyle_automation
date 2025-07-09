@@ -100,5 +100,24 @@
       "Content Cleaning",
       "Dehumidification"
     ]
+  },
+  "paymentServices": {
+    "deductibleRequired": "Yes",
+    "amount": "2500",
+    "collectWhen": "Upon Completion",
+    "dwellingLimits": "300000",
+    "contentsLimits": "150000",
+    "otherStructuresLimits": "30000",
+    "selfPay": false
+  },
+  "lossDescriptionSection": {
+    "lossDescription": "Water heater failed in basement utility room causing significant water damage. Water spread throughout basement and seeped into adjacent rooms. Estimated 2 inches of standing water in affected areas. Drywall and flooring damage observed.",
+    "specialInstructions": "Property owner will be present during initial assessment. Please use basement entrance to access affected areas. Shut off main water supply before beginning work. Customer prefers evening hours (after 6 PM) for restoration work.",
+    "roomsAffected": [
+      "Basement",
+      "Utility Room",
+      "Laundry Room", 
+      "Storage Room"
+    ]
   }
 } 
