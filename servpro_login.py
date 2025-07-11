@@ -608,6 +608,116 @@ def fill_telerik_date_field(driver, wait, field_id, date_value, field_name=""):
         print(f"❌ Error filling Telerik date {field_name}: {str(e)}")
         return False
 
+def fill_telerik_dropdown_tree_field(driver, wait, field_id, value, field_name=""):
+    """Fill a Telerik RadDropDownTree field (like the Title field)"""
+    if not value:
+        return False
+        
+    try:
+        print(f"    🌳 Attempting to fill Telerik dropdown tree: {field_name}")
+        
+        # Method 1: Try to click the dropdown tree to open it
+        try:
+            dropdown_tree = wait.until(EC.element_to_be_clickable((By.ID, field_id)))
+            
+            # Click to open the dropdown tree
+            dropdown_tree.click()
+            time.sleep(1)
+            
+            print(f"    🔍 Searching for tree node: {value}")
+            
+            # Look for the tree node with the exact text
+            # Try different selectors for tree nodes
+            tree_node_selectors = [
+                f"//span[@class='rtIn' and text()='{value}']",
+                f"//span[@class='rtIn' and contains(text(), '{value}')]",
+                f"//li[@class='rtLI']//span[text()='{value}']",
+                f"//li[contains(@class, 'rtLI')]//span[contains(text(), '{value}')]"
+            ]
+            
+            node_found = False
+            for selector in tree_node_selectors:
+                try:
+                    tree_nodes = driver.find_elements(By.XPATH, selector)
+                    for node in tree_nodes:
+                        if node.is_displayed() and node.text.strip() == value:
+                            # Scroll into view if needed
+                            driver.execute_script("arguments[0].scrollIntoView(true);", node)
+                            time.sleep(0.5)
+                            
+                            # Click the node
+                            node.click()
+                            print(f"✅ Selected tree node {field_name}: {value}")
+                            time.sleep(0.5)
+                            
+                            # Verify the hidden field was updated
+                            hidden_field_id = field_id.replace('_TitleDropDownTree', '_hidden_TitleText')
+                            try:
+                                hidden_field = driver.find_element(By.ID, hidden_field_id)
+                                if hidden_field.get_attribute('value') == value:
+                                    print(f"✅ Hidden field updated successfully: {value}")
+                                else:
+                                    print(f"⚠️ Hidden field value: '{hidden_field.get_attribute('value')}', expected: '{value}'")
+                            except:
+                                print(f"⚠️ Could not verify hidden field update")
+                            
+                            node_found = True
+                            break
+                    
+                    if node_found:
+                        break
+                except Exception as e:
+                    continue
+            
+            if not node_found:
+                print(f"⚠️ Could not find tree node for: {value}")
+                # Try to close the dropdown if it's still open
+                try:
+                    dropdown_tree.click()
+                except:
+                    pass
+                return False
+            
+            return True
+            
+        except Exception as e:
+            print(f"    ⚠️ Dropdown tree click method failed: {str(e)}")
+        
+        # Method 2: Try direct JavaScript approach
+        try:
+            # Use the hidden field directly
+            hidden_field_id = field_id.replace('_TitleDropDownTree', '_hidden_TitleText')
+            script = f"""
+            var hiddenField = document.getElementById('{hidden_field_id}');
+            if (hiddenField) {{
+                hiddenField.value = '{value}';
+                // Trigger change event
+                var event = new Event('change');
+                hiddenField.dispatchEvent(event);
+            }}
+            """
+            driver.execute_script(script)
+            print(f"✅ Set dropdown tree {field_name} (JS Hidden Field): {value}")
+            return True
+        except Exception as e:
+            print(f"    ⚠️ JavaScript hidden field method failed: {str(e)}")
+        
+        # Method 3: Try Telerik API if available
+        try:
+            script = f"$find('{field_id}').set_text('{value}');"
+            driver.execute_script(script)
+            print(f"✅ Set dropdown tree {field_name} (Telerik API): {value}")
+            return True
+        except Exception as e:
+            print(f"    ⚠️ Telerik API method failed: {str(e)}")
+            
+        print(f"❌ Could not fill Telerik dropdown tree: {field_name}")
+        return False
+        
+    except Exception as e:
+        print(f"❌ Error filling Telerik dropdown tree {field_name}: {str(e)}")
+        return False
+
 def fill_telerik_masked_phone_field(driver, wait, field_id, phone_value, field_name=""):
     """Fill a Telerik RadMaskedTextBox phone field with proper formatting"""
     if not phone_value:
@@ -842,8 +952,8 @@ def fill_individual_customer_fields(driver, wait, data):
             print(f"  🔍 Processing Individual Customer field: {field_name} = {value}")
             
             if field_name == 'title':
-                # Handle title dropdown tree (complex control)
-                fill_telerik_dropdown_field(driver, wait, field_id, value, field_name)
+                # Handle title dropdown tree (RadDropDownTree control)
+                fill_telerik_dropdown_tree_field(driver, wait, field_id, value, field_name)
             elif field_name in ['customer', 'countyRegion', 'country', 'stateProvince']:
                 fill_telerik_dropdown_field(driver, wait, field_id, value, field_name)
             elif field_name == 'address':

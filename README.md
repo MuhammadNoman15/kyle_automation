@@ -129,6 +129,11 @@ The script provides individual section testing:
 - Supports various phone number formats
 - Handles extensions properly
 
+### Title Field Support
+- Specialized handling for RadDropDownTree title selection
+- Supports civilian titles: Dr., Mr., Mrs., Ms., Mx., Prof.
+- Supports military ranks across all service branches (Army, Air Force, Navy/Coast Guard, Marine Corps)
+
 ### Room Selection
 - Dual RadListBox interface for room affected selection
 - Supports transferring rooms from source to chosen list

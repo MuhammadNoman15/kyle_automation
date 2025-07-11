@@ -22,6 +22,7 @@
     "customerType": "Individual",
     "isSameAsJobAddress": false,
     "customer": "",
+    "_titleNote": "Available titles: Dr., Mr., Mrs., Ms., Mx., Prof., or military ranks (GEN - General, etc.)",
     "title": "Mr.",
     "firstName": "John",
     "lastName": "Smith",
