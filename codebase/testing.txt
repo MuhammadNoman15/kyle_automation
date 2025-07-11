@@ -1,0 +1,119 @@
+Missing Division Section
+
+{
+  "generalInformation": {
+    "officeName": "SPSC, LLC",
+    "lossCategory": "Residential",
+    "jobName": "Test Job"
+  },
+  "customerInformation": {
+    "customerType": "Individual",
+    "firstName": "John",
+    "lastName": "Smith",
+    "address": "123 Main Street",
+    "zipCode": "30309",
+    "city": "Atlanta",
+    "countyRegion": "Fulton County",
+    "country": "USA",
+    "stateProvince": "Georgia",
+    "mainPhoneNumber": {
+      "number": "1-404-555-1234",
+      "type": "Mobile"
+    }
+  }
+}
+
+
+Empty Division Object
+
+
+{
+  "generalInformation": {
+    "officeName": "SPSC, LLC",
+    "lossCategory": "Residential",
+    "jobName": "Test Job"
+  },
+  "customerInformation": {
+    "customerType": "Individual",
+    "firstName": "John",
+    "lastName": "Smith",
+    "address": "123 Main Street",
+    "zipCode": "30309",
+    "city": "Atlanta",
+    "countyRegion": "Fulton County",
+    "country": "USA",
+    "stateProvince": "Georgia",
+    "mainPhoneNumber": {
+      "number": "1-404-555-1234",
+      "type": "Mobile"
+    }
+  },
+  "division": {}
+}
+
+
+Empty ServicesSelected Array
+
+
+
+{
+  "generalInformation": {
+    "officeName": "SPSC, LLC",
+    "lossCategory": "Residential",
+    "jobName": "Test Job"
+  },
+  "customerInformation": {
+    "customerType": "Individual",
+    "firstName": "John",
+    "lastName": "Smith",
+    "address": "123 Main Street",
+    "zipCode": "30309",
+    "city": "Atlanta",
+    "countyRegion": "Fulton County",
+    "country": "USA",
+    "stateProvince": "Georgia",
+    "mainPhoneNumber": {
+      "number": "1-404-555-1234",
+      "type": "Mobile"
+    }
+  },
+  "division": {
+    "servicesSelected": []
+  }
+}
+
+
+
+Valid JSON (Should Work)
+
+
+{
+  "generalInformation": {
+    "officeName": "SPSC, LLC",
+    "lossCategory": "Residential",
+    "jobName": "Test Job - Water Damage"
+  },
+  "customerInformation": {
+    "customerType": "Individual",
+    "firstName": "John",
+    "lastName": "Smith",
+    "address": "123 Main Street",
+    "zipCode": "30309",
+    "city": "Atlanta",
+    "countyRegion": "Fulton County",
+    "country": "USA",
+    "stateProvince": "Georgia",
+    "mainPhoneNumber": {
+      "number": "1-404-555-1234",
+      "type": "Mobile"
+    }
+  },
+  "division": {
+    "servicesSelected": [
+      "Water Mitigation",
+      "Structure",
+      "Mold"
+    ]
+  }
+}
+

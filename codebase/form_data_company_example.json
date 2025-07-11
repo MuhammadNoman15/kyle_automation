@@ -1,0 +1,137 @@
+{
+  "_comment": "SERVPRO Job Creation Form Data Example - Company Customer Format",
+  "_note": "This example shows the field structure for Company Customer type",
+  "generalInformation": {
+    "receivedBy": "Kyle McDougall",
+    "jobName": "TechCorp Industries - Water Damage",
+    "reportedBy": "Facility Manager",
+    "referredBy": "Lewis, A.D.",
+    "jobSize": "Large",
+    "officeName": "SPSC, LLC",
+    "dateOfLoss": "12/15/2024",
+    "lossCategory": "Commercial",
+    "environmentalCode": "Mitigation",
+    "catReference": "",
+    "priority": "High",
+    "lossType": "General Repairs",
+    "secondaryLossType": "Mold",
+    "sourceOfLoss": "Pipe Break"
+  },
+  "customerInformation": {
+    "_comment": "Company Customer fields - uses company-specific field names",
+    "customerType": "Company",
+    "isSameAsJobAddress": false,
+    "companyCustomer": "",
+    "companyName": "TechCorp Industries LLC",
+    "companyEmail": "contact@techcorp.com",
+    "companyAddress": "1500 Technology Drive",
+    "companyZipCode": "30309",
+    "companyCity": "Atlanta",
+    "companyCountyRegion": "Fulton County",
+    "companyCountry": "USA",
+    "companyStateProvince": "Georgia",
+    "companyCustomerContact": "Jennifer Martinez",
+    "_phoneNote": "Company Customer section only has ONE main phone field with type selector",
+    "companyMainPhoneNumber": {
+      "number": "1-404-555-7000",
+      "extension": "150",
+      "type": "Business"
+    }
+  },
+  "jobAddressInformation": {
+    "_comment": "Company Job Address fields - uses company job address specific field names",
+    "customerType": "Company",
+    "isSameAsCustomerAddress": false,
+    "companyContactSelection": {
+      "existingContact": "Jennifer Martinez",
+      "newContactFirstName": "Mike",
+      "newContactLastName": "Johnson"
+    },
+    "companyJobAddress": "2000 Business Park Avenue",
+    "companyJobZipCode": "30309",
+    "companyJobCity": "Atlanta",
+    "companyJobCountyRegion": "Fulton County",
+    "companyJobCountry": "USA",
+    "companyJobStateProvince": "Georgia",
+    "companyMainPhoneLoss": {
+      "number": "1-404-555-6000",
+      "extension": "350",
+      "type": "Business"
+    },
+    "companyBusinessPhoneLoss": {
+      "number": "1-404-555-6001",
+      "extension": "450",
+      "type": "Business"
+    }
+  },
+  "internalParticipants": {
+    "estimator": "Kyle McDougall",
+    "coordinator": "Sarah Johnson",
+    "supervisor": "Mike Wilson",
+    "foreman": "Tom Rodriguez",
+    "accounting": "Lisa Chen",
+    "marketing": "Adams, Sherri",
+    "dispatcher": "Adams, Sherri",
+    "naAdministrator": "Adams, Sherri",
+    "naFieldAccountsManager": "Adams, Sherri"
+  },
+  "externalParticipants": {
+    "brokerAgent": "Corporate Risk Brokers",
+    "brokerAgentContact": "David Thompson",
+    "insuranceCarrier": "Commercial Property Insurance",
+    "primaryAdjuster": "Susan Davis",
+    "primaryFieldAdjuster": "Mark Rodriguez",
+    "propertyManagement": "Enterprise Property Solutions",
+    "propertyManagementContact": "Lisa Wilson",
+    "contractorCompany": "SERVPRO Construction",
+    "contractorContact": "Amanda Taylor",
+    "independentAdjustingFirm": "Corporate Adjusting Services",
+    "independentAdjusterContact": "Robert Chen",
+    "publicAdjustingFirm": "Commercial Public Adjusters",
+    "publicAdjusterContact": "Jennifer Brown",
+    "primaryMortgage": "Corporate Banking",
+    "secondaryMortgage": "Business Finance Corp",
+    "tpaCompany": "Enterprise TPA Services",
+    "tpa": "Michael Johnson",
+    "billToCompany": "TechCorp Industries LLC",
+    "billToContact": "Jennifer Martinez",
+    "secondaryContact": "Mike Johnson",
+    "businessContact": "David Smith"
+  },
+  "policyInformation": {
+    "claimNumber": "TECH-2024-54321",
+    "fileNumber": "CORP-FILE-002",
+    "policyNumber": "CORP-POL-987654321",
+    "yearBuilt": 1992,
+    "policyStartDate": "01/01/2024",
+    "policyExpirationDate": "01/01/2025"
+  },
+  "division": {
+    "servicesSelected": [
+      "Water Mitigation",
+      "Structure",
+      "Mold",
+      "Reconstruction"
+    ]
+  },
+  "paymentServices": {
+    "deductibleRequired": "Yes",
+    "amount": "10000",
+    "collectWhen": "Upon Completion",
+    "dwellingLimits": "1000000",
+    "contentsLimits": "500000",
+    "otherStructuresLimits": "100000",
+    "selfPay": false
+  },
+  "lossDescriptionSection": {
+    "lossDescription": "Major water damage in corporate headquarters due to burst pipe in HVAC system. Water spread across multiple floors affecting office spaces, server room, and equipment. Significant damage to flooring, ceiling tiles, and office furniture. Emergency water extraction completed immediately.",
+    "specialInstructions": "Priority access required for server room recovery. Coordinate with IT department before accessing computer equipment. Work must be scheduled around business operations (after 7 PM weekdays, weekends preferred). Special care required for sensitive electronic equipment and documents.",
+    "roomsAffected": [
+      "Office",
+      "Conference Room", 
+      "Server Room",
+      "Storage Room",
+      "Hallway"
+    ]
+  }
+} 
