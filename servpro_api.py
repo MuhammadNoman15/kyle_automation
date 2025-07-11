@@ -4,7 +4,6 @@ SERVPRO API automation script - REST API endpoint for form filling
 
 from flask import Flask, request, jsonify, render_template_string
 from flask_restx import Api, Resource, fields
-from werkzeug.datastructures import FileStorage
 import json
 import time
 import os
@@ -49,10 +48,10 @@ def welcome():
         "status": "running",
         "endpoints": {
             "health_check": "GET /health",
-            "fill_form": "POST /fill-form (upload .json file)",
+            "fill_form": "POST /fill-form (send JSON data)",
             "documentation": "GET /docs/"
         },
-        "usage": "Upload JSON file to /fill-form endpoint to automate SERVPRO form filling"
+        "usage": "Send JSON data to /fill-form endpoint to automate SERVPRO form filling"
     })
 
 # Initialize Flask-RESTX API after the welcome route
@@ -66,79 +65,89 @@ api = Api(
 
 # Define API models for documentation
 general_info_model = api.model('GeneralInformation', {
-    'receivedBy': fields.String(description='Who received the job', example='Kyle McDougall'),
-    'jobName': fields.String(description='Job name', example='Smith, John - Water Damage'),
-    'reportedBy': fields.String(description='Who reported the job', example='Property Owner'),
-    'referredBy': fields.String(description='Who referred the job', example='Lewis, A.D.'),
-    'jobSize': fields.String(description='Size of the job', example='Medium'),
-    'officeName': fields.String(description='Office name', example='SPSC, LLC'),
-    'dateOfLoss': fields.String(description='Date of loss (MM/DD/YYYY)', example='12/15/2024'),
-    'lossCategory': fields.String(description='Category of loss', example='Residential'),
-    'environmentalCode': fields.String(description='Environmental code', example='Mitigation'),
-    'priority': fields.String(description='Priority level', example='High'),
-    'lossType': fields.String(description='Type of loss', example='General Repairs'),
-    'secondaryLossType': fields.String(description='Secondary loss type', example='Mold'),
-    'sourceOfLoss': fields.String(description='Source of the loss', example='Pipe Break')
+    'receivedBy': fields.String(description='Who received the job'),
+    'jobName': fields.String(description='Job name'),
+    'reportedBy': fields.String(description='Who reported the job'),
+    'referredBy': fields.String(description='Who referred the job'),
+    'jobSize': fields.String(description='Size of the job'),
+    'officeName': fields.String(description='Office name (REQUIRED)', required=True),
+    'dateOfLoss': fields.String(description='Date of loss (MM/DD/YYYY)'),
+    'lossCategory': fields.String(description='Category of loss (REQUIRED)', required=True),
+    'environmentalCode': fields.String(description='Environmental code'),
+    'priority': fields.String(description='Priority level'),
+    'lossType': fields.String(description='Type of loss'),
+    'secondaryLossType': fields.String(description='Secondary loss type'),
+    'sourceOfLoss': fields.String(description='Source of the loss')
 })
 
 phone_model = api.model('PhoneNumber', {
-    'number': fields.String(description='Phone number with country code', example='1-404-555-1234'),
-    'extension': fields.String(description='Phone extension', example=''),
-    'type': fields.String(description='Phone type', example='Mobile')
+    'number': fields.String(description='Phone number with country code', required=True),
+    'extension': fields.String(description='Phone extension'),
+    'type': fields.String(description='Phone type')
 })
 
 customer_info_model = api.model('CustomerInformation', {
-    'customerType': fields.String(required=True, description='Customer type', enum=['Individual', 'Company'], example='Individual'),
-    'isSameAsJobAddress': fields.Boolean(description='Same as job address', example=False),
-    'title': fields.String(description='Customer title (Individual only)', example='Mr.'),
-    'firstName': fields.String(description='First name (Individual only)', example='John'),
-    'lastName': fields.String(description='Last name (Individual only)', example='Smith'),
-    'email': fields.String(description='Email address', example='john.smith@email.com'),
-    'address': fields.String(description='Address', example='123 Main Street'),
-    'zipCode': fields.String(description='ZIP code', example='30309'),
-    'city': fields.String(description='City', example='Atlanta'),
-    'countyRegion': fields.String(description='County/Region', example='Fulton County'),
-    'country': fields.String(description='Country', example='USA'),
-    'stateProvince': fields.String(description='State/Province', example='Georgia'),
-    'mainPhoneNumber': fields.Nested(phone_model, description='Main phone number'),
-    'companyName': fields.String(description='Company name (Company only)', example='ABC Corporation'),
-    'companyEmail': fields.String(description='Company email (Company only)', example='contact@abc.com')
+    'customerType': fields.String(required=True, description='Customer type (REQUIRED)', enum=['Individual', 'Company']),
+    'isSameAsJobAddress': fields.Boolean(description='Same as job address'),
+    'title': fields.String(description='Customer title (Individual only)'),
+    'firstName': fields.String(description='First name (Individual only - REQUIRED)', required=True),
+    'lastName': fields.String(description='Last name (Individual only - REQUIRED)', required=True),
+    'email': fields.String(description='Email address'),
+    'address': fields.String(description='Address (REQUIRED)', required=True),
+    'zipCode': fields.String(description='ZIP code (REQUIRED)', required=True),
+    'city': fields.String(description='City (REQUIRED)', required=True),
+    'countyRegion': fields.String(description='County/Region (REQUIRED)', required=True),
+    'country': fields.String(description='Country (REQUIRED)', required=True),
+    'stateProvince': fields.String(description='State/Province (REQUIRED)', required=True),
+    'mainPhoneNumber': fields.Nested(phone_model, description='Main phone number (REQUIRED)', required=True),
+    'companyName': fields.String(description='Company name (Company only - REQUIRED when customerType is Company)'),
+    'companyEmail': fields.String(description='Company email (Company only)')
 })
 
 job_address_model = api.model('JobAddressInformation', {
-    'customerType': fields.String(required=True, description='Customer type', enum=['Individual', 'Company'], example='Individual'),
-    'isSameAsCustomerAddress': fields.Boolean(description='Same as customer address', example=False),
-    'firstName': fields.String(description='First name (Individual only)', example='John'),
-    'lastName': fields.String(description='Last name (Individual only)', example='Smith'),
-    'address': fields.String(description='Job site address', example='456 Loss Address Street'),
-    'zipCode': fields.String(description='ZIP code', example='30309'),
-    'city': fields.String(description='City', example='Atlanta'),
-    'countyRegion': fields.String(description='County/Region', example='Fulton County'),
-    'country': fields.String(description='Country', example='USA'),
-    'stateProvince': fields.String(description='State/Province', example='Georgia'),
+    'customerType': fields.String(required=True, description='Customer type', enum=['Individual', 'Company']),
+    'isSameAsCustomerAddress': fields.Boolean(description='Same as customer address'),
+    'firstName': fields.String(description='First name (Individual only)'),
+    'lastName': fields.String(description='Last name (Individual only)'),
+    'address': fields.String(description='Job site address'),
+    'zipCode': fields.String(description='ZIP code'),
+    'city': fields.String(description='City'),
+    'countyRegion': fields.String(description='County/Region'),
+    'country': fields.String(description='Country'),
+    'stateProvince': fields.String(description='State/Province'),
     'mainPhoneNumber': fields.Nested(phone_model, description='Main phone number')
 })
 
-# File upload parser for Swagger documentation
-upload_parser = api.parser()
-upload_parser.add_argument('file', location='files', type=FileStorage, required=True, 
-                          help='JSON file containing form data (.json extension required)')
+# JSON body model for Swagger documentation (not used for input display)
+form_data_model = api.model('FormData', {
+    'generalInformation': fields.Nested(general_info_model, required=True, description='General job information'),
+    'customerInformation': fields.Nested(customer_info_model, required=True, description='Customer details'),
+    'jobAddressInformation': fields.Nested(job_address_model, description='Job site address information'),
+    'internalParticipants': fields.Raw(description='Internal team participants'),
+    'externalParticipants': fields.Raw(description='External participants and contacts'),
+    'policyInformation': fields.Raw(description='Insurance policy information'),
+    'division': fields.Raw(description='Services and divisions (at least one must be selected)'),
+    'paymentServices': fields.Raw(description='Payment and billing information'),
+    'lossDescriptionSection': fields.Raw(description='Loss description and affected rooms')
+})
 
 success_response_model = api.model('SuccessResponse', {
-    'success': fields.Boolean(description='Operation success status', example=True),
-    'message': fields.String(description='Success message', example='Form filled successfully'),
-    'customer_type': fields.String(description='Customer type processed', example='Individual'),
-    'job_name': fields.String(description='Job name processed', example='Smith, John - Water Damage')
+    'success': fields.Boolean(description='Operation success status'),
+    'message': fields.String(description='Success message'),
+    'customer_type': fields.String(description='Customer type processed'),
+    'job_name': fields.String(description='Job name processed'),
+    'job_number': fields.String(description='SERVPRO job number from slideboard'),
+    'job_id': fields.String(description='SERVPRO job ID from slideboard')
 })
 
 error_response_model = api.model('ErrorResponse', {
-    'success': fields.Boolean(description='Operation success status', example=False),
-    'error': fields.String(description='Error message', example='Failed to login to SERVPRO')
+    'success': fields.Boolean(description='Operation success status'),
+    'error': fields.String(description='Error message')
 })
 
 health_response_model = api.model('HealthResponse', {
-    'status': fields.String(description='API health status', example='healthy'),
-    'message': fields.String(description='Health status message', example='SERVPRO API is running')
+    'status': fields.String(description='API health status'),
+    'message': fields.String(description='Health status message')
 })
 
 class ServproAutomation:
@@ -453,10 +462,122 @@ class ServproAutomation:
             traceback.print_exc()
             return False
     
+    def save_and_go_to_slideboard(self):
+        """Click the 'Save & Go to Slideboard' button and extract job details"""
+        try:
+            print("💾 Looking for 'Save & Go to Slideboard' button...")
+            
+            # Multiple selectors for the save button
+            save_button_selectors = [
+                (By.ID, "ctl00_ContentPlaceHolder1_JobParentInformation_Button_SaveAndGoToSlideBoardBottom_input"),
+                (By.ID, "ctl00_ContentPlaceHolder1_JobParentInformation_Button_SaveAndGoToSlideBoardBottom"),
+                (By.XPATH, "//input[@value='Save & Go to Slideboard']"),
+                (By.XPATH, "//input[contains(@value, 'Save') and contains(@value, 'Slideboard')]"),
+                (By.XPATH, "//span[contains(@id, 'SaveAndGoToSlideBoard')]//input"),
+                (By.XPATH, "//button[contains(text(), 'Save & Go to Slideboard')]"),
+                (By.XPATH, "//input[contains(@id, 'SaveAndGoToSlideBoard')]"),
+                (By.CSS_SELECTOR, "input[value*='Save'][value*='Slideboard']")
+            ]
+            
+            save_button = None
+            for selector_type, selector_value in save_button_selectors:
+                try:
+                    save_button = self.wait.until(EC.element_to_be_clickable((selector_type, selector_value)))
+                    print(f"✅ Found save button using: {selector_type} = {selector_value}")
+                    break
+                except:
+                    continue
+            
+            if not save_button:
+                print("❌ Could not find 'Save & Go to Slideboard' button")
+                return None, None
+            
+            # Scroll to button and click
+            self.driver.execute_script("arguments[0].scrollIntoView(true);", save_button)
+            time.sleep(1)
+            
+            print("🖱️ Clicking 'Save & Go to Slideboard' button...")
+            try:
+                # Try regular click first
+                save_button.click()
+                print("✅ Button clicked successfully")
+            except Exception as click_error:
+                print(f"⚠️ Regular click failed: {click_error}")
+                try:
+                    # Try JavaScript click as backup
+                    self.driver.execute_script("arguments[0].click();", save_button)
+                    print("✅ JavaScript click succeeded")
+                except Exception as js_error:
+                    print(f"❌ JavaScript click also failed: {js_error}")
+                    return None, None
+            
+            # Wait for redirect to slideboard page
+            print("⏳ Waiting for redirect to slideboard...")
+            time.sleep(5)  # Give time for the redirect
+            
+            # Wait for URL to contain slideboard
+            try:
+                print("🔍 Checking for URL change...")
+                self.wait.until(lambda driver: "jJobSlideBoard.aspx" in driver.current_url)
+                print("✅ Successfully redirected to slideboard")
+            except Exception as redirect_error:
+                print(f"⚠️ Timeout waiting for slideboard redirect: {redirect_error}")
+                print("📄 Continuing with current page...")
+            
+            # Extract job details from URL
+            current_url = self.driver.current_url
+            print(f"📄 Current URL: {current_url}")
+            
+            # Check if we're actually on the slideboard page
+            if "jJobSlideBoard.aspx" in current_url:
+                print("✅ Successfully on slideboard page")
+            else:
+                print("⚠️ Not on slideboard page - button click may have failed")
+                print(f"📄 Current page title: {self.driver.title}")
+                # Let's try to find any error messages or alerts
+                try:
+                    alerts = self.driver.find_elements(By.XPATH, "//*[contains(@class, 'alert') or contains(@class, 'error') or contains(@class, 'message')]")
+                    if alerts:
+                        for alert in alerts:
+                            if alert.is_displayed():
+                                print(f"⚠️ Found page message: {alert.text}")
+                except:
+                    pass
+            
+            job_number = None
+            job_id = None
+            
+            # Parse URL parameters
+            if "?" in current_url:
+                url_params = current_url.split("?")[1]
+                params = {}
+                for param in url_params.split("&"):
+                    if "=" in param:
+                        key, value = param.split("=", 1)
+                        params[key] = value
+                
+                job_number = params.get("JobNumber")
+                job_id = params.get("JobId")
+                
+                print(f"📋 Extracted Job Number: {job_number}")
+                print(f"🆔 Extracted Job ID: {job_id}")
+            
+            if not job_number or not job_id:
+                print("⚠️ Could not extract job details from URL")
+            
+            return job_number, job_id
+            
+        except Exception as e:
+            print(f"❌ Error saving and going to slideboard: {str(e)}")
+            traceback.print_exc()
+            return None, None
+    
     def cleanup(self):
         """Clean up browser resources"""
         try:
             if self.driver:
+                print("⏳ Waiting 5 seconds before closing browser...")
+                time.sleep(5)
                 print("🧹 Closing browser...")
                 self.driver.quit()
         except Exception as e:
@@ -481,17 +602,18 @@ def validate_form_data(data):
     return True, "Valid"
 
 def validate_json_format(data):
-    """Validate if JSON has the expected SERVPRO form structure"""
+    """Validate if JSON has the expected SERVPRO form structure with mandatory fields"""
     if not isinstance(data, dict):
-        return False, "Invalid JSON format. Expected a JSON object with SERVPRO form structure. Please use form_data_individual_example.json or form_data_company_example.json as templates."
+        return False, "Invalid JSON format. Expected a JSON object with SERVPRO form structure. Please use the correct structure like form_data_individual_example.json or form_data_company_example.json."
     
     # Check for expected main sections
     expected_sections = [
         'generalInformation',
-        'customerInformation'
+        'customerInformation',
+        'division'
     ]
     
-    # At minimum, we need these two sections
+    # At minimum, we need these three sections
     missing_sections = [section for section in expected_sections if section not in data]
     if missing_sections:
         return False, f"Invalid SERVPRO form format. Missing required sections: {', '.join(missing_sections)}. Please use the correct JSON structure like form_data_individual_example.json."
@@ -501,11 +623,20 @@ def validate_json_format(data):
     if not isinstance(general_info, dict):
         return False, "Invalid format: 'generalInformation' must be an object. Please check form_data_individual_example.json for correct structure."
     
-    # Check for some key fields in generalInformation
-    general_required_fields = ['jobName', 'receivedBy']
-    missing_general_fields = [field for field in general_required_fields if field not in general_info]
+    # Check for mandatory fields in General Information (marked with red asterisks in form)
+    general_required_fields = ['officeName', 'lossCategory']
+    missing_general_fields = []
+    for field in general_required_fields:
+        if field not in general_info or not general_info.get(field) or str(general_info.get(field)).strip() == '':
+            missing_general_fields.append(field)
+    
     if missing_general_fields:
-        return False, f"Invalid format: Missing required fields in 'generalInformation': {', '.join(missing_general_fields)}. Please use form_data_individual_example.json as template."
+        field_names = {
+            'officeName': 'Office Name',
+            'lossCategory': 'Loss Category'
+        }
+        readable_fields = [field_names.get(field, field) for field in missing_general_fields]
+        return False, f"Invalid format: Missing required values for mandatory fields in 'generalInformation': {', '.join(readable_fields)}. These fields cannot be empty."
     
     # Validate customerInformation structure
     customer_info = data.get('customerInformation', {})
@@ -520,6 +651,104 @@ def validate_json_format(data):
     if customer_type not in ['Individual', 'Company']:
         return False, f"Invalid format: 'customerType' must be 'Individual' or 'Company', got '{customer_type}'. Please use form_data_individual_example.json as template."
     
+    # Validate mandatory customer fields based on customer type
+    if customer_type == 'Individual':
+        # Individual Customer mandatory fields (marked with red asterisks)
+        individual_required_fields = [
+            'firstName', 'lastName', 'address', 'zipCode', 'city', 
+            'countyRegion', 'country', 'stateProvince'
+        ]
+        missing_individual_fields = []
+        for field in individual_required_fields:
+            if field not in customer_info or not customer_info.get(field) or str(customer_info.get(field)).strip() == '':
+                missing_individual_fields.append(field)
+        
+        # Check main phone number
+        if 'mainPhoneNumber' not in customer_info or not customer_info.get('mainPhoneNumber'):
+            missing_individual_fields.append('mainPhoneNumber')
+        elif isinstance(customer_info.get('mainPhoneNumber'), dict):
+            phone_data = customer_info.get('mainPhoneNumber')
+            if not phone_data.get('number') or str(phone_data.get('number')).strip() == '':
+                missing_individual_fields.append('mainPhoneNumber.number')
+        
+        if missing_individual_fields:
+            field_names = {
+                'firstName': 'First Name',
+                'lastName': 'Last Name', 
+                'address': 'Address',
+                'zipCode': 'ZIP/Postal Code',
+                'city': 'City',
+                'countyRegion': 'County/Region',
+                'country': 'Country',
+                'stateProvince': 'State/Province',
+                'mainPhoneNumber': 'Main Phone Number',
+                'mainPhoneNumber.number': 'Main Phone Number'
+            }
+            readable_fields = [field_names.get(field, field) for field in missing_individual_fields]
+            return False, f"Invalid format: Missing required values for mandatory Individual Customer fields: {', '.join(readable_fields)}. These fields cannot be empty."
+    
+    elif customer_type == 'Company':
+        # Company Customer mandatory fields (marked with red asterisks)
+        company_required_fields = [
+            'companyName', 'companyAddress', 'companyZipCode', 'companyCity',
+            'companyCountyRegion', 'companyCountry', 'companyStateProvince'
+        ]
+        missing_company_fields = []
+        for field in company_required_fields:
+            if field not in customer_info or not customer_info.get(field) or str(customer_info.get(field)).strip() == '':
+                missing_company_fields.append(field)
+        
+        # Check company main phone number
+        if 'companyMainPhoneNumber' not in customer_info or not customer_info.get('companyMainPhoneNumber'):
+            missing_company_fields.append('companyMainPhoneNumber')
+        elif isinstance(customer_info.get('companyMainPhoneNumber'), dict):
+            phone_data = customer_info.get('companyMainPhoneNumber')
+            if not phone_data.get('number') or str(phone_data.get('number')).strip() == '':
+                missing_company_fields.append('companyMainPhoneNumber.number')
+        
+        if missing_company_fields:
+            field_names = {
+                'companyName': 'Company Name',
+                'companyAddress': 'Company Address',
+                'companyZipCode': 'ZIP/Postal Code',
+                'companyCity': 'City',
+                'companyCountyRegion': 'County/Region',
+                'companyCountry': 'Country',
+                'companyStateProvince': 'State/Province',
+                'companyMainPhoneNumber': 'Main Phone Number',
+                'companyMainPhoneNumber.number': 'Main Phone Number'
+            }
+            readable_fields = [field_names.get(field, field) for field in missing_company_fields]
+            return False, f"Invalid format: Missing required values for mandatory Company Customer fields: {', '.join(readable_fields)}. These fields cannot be empty."
+    
+    # Validate division section - at least one service must be selected
+    if 'division' not in data:
+        return False, "Missing required section: 'division'. Please include the division section with servicesSelected array containing at least one service. Example: {'division': {'servicesSelected': ['Water Mitigation', 'Structure']}}"
+    
+    division_info = data.get('division', {})
+    if not isinstance(division_info, dict):
+        return False, "Invalid format: 'division' must be an object. Please check form_data_individual_example.json for correct structure."
+    
+    if not division_info:
+        return False, "Empty division section. Please include servicesSelected array with at least one service. Example: {'division': {'servicesSelected': ['Water Mitigation', 'Structure']}}"
+    
+    # Check for servicesSelected array format
+    if 'servicesSelected' not in division_info:
+        return False, "Missing required field: 'servicesSelected' in division section. Please include an array of selected services. Example: {'division': {'servicesSelected': ['Water Mitigation', 'Structure', 'Mold']}}"
+    
+    services_selected = division_info.get('servicesSelected', [])
+    if not isinstance(services_selected, list):
+        return False, "Invalid format: 'servicesSelected' must be an array of service names. Example: {'division': {'servicesSelected': ['Water Mitigation', 'Structure']}}"
+    
+    if not services_selected or len(services_selected) == 0:
+        available_services = [
+            'Temporary Repairs', 'Water Mitigation', 'Reconstruction', 'Structure', 
+            'Contents', 'Roofing', 'Negotiated Work Reconstruction', 'DRT - Water', 
+            'DRT - Mold', 'DRT - Reconstruction', 'DRT - Misc', 'DRT - Fire', 
+            'General Cleaning', 'Mold'
+        ]
+        return False, f"At least one Division service must be selected. Please add services to the servicesSelected array. Available services: {', '.join(available_services)}. Example: {{'division': {{'servicesSelected': ['Water Mitigation', 'Structure']}}}}"
+    
     return True, "Valid format"
 
 @api.route('/health')
@@ -533,86 +762,145 @@ class HealthCheck(Resource):
             "message": "SERVPRO API is running"
         }
 
+# Simple placeholder model for clean Swagger UI (completely empty input)
+simple_json_model = api.model('JsonPayload', {})
+
 @api.route('/fill-form')
 class FillForm(Resource):
     @api.doc('fill_form')
-    @api.expect(upload_parser)
+    @api.expect(simple_json_model, validate=False)
     def post(self):
-        """Fill the SERVPRO job creation form with uploaded JSON file
+        """Fill the SERVPRO job creation form with JSON data
         
-        This endpoint accepts a JSON file upload containing form information and automatically:
+        This endpoint accepts raw JSON data in the request body containing complete SERVPRO form information.
+        
+        **Process:**
         - Opens a browser instance
-        - Logs into SERVPRO
+        - Logs into SERVPRO automatically
         - Navigates to the job creation form
-        - Fills all form sections with the data from the uploaded JSON file
-        - Closes the browser
-        - Returns success/failure status
+        - Fills all form sections with the provided JSON data
+        - Clicks 'Save & Go to Slideboard' button
+        - Extracts job number and job ID from the slideboard URL
+        - Waits 5 seconds before closing browser
+        - Returns success/failure status with job details
+        
+        **Request Requirements:**
+        - Content-Type: application/json
+        - Request body: Raw JSON object with complete SERVPRO form structure
+        
+        **Mandatory Fields:**
+        - generalInformation.officeName (required)
+        - generalInformation.lossCategory (required)
+        - customerInformation.customerType (required: "Individual" or "Company")
+        - For Individual: firstName, lastName, address, zipCode, city, countyRegion, country, stateProvince, mainPhoneNumber
+        - For Company: companyName, companyAddress, companyZipCode, companyCity, companyCountyRegion, companyCountry, companyStateProvince, companyMainPhoneNumber
+        - division.servicesSelected: Array of selected services (at least one required) - Available: "Temporary Repairs", "Water Mitigation", "Reconstruction", "Structure", "Contents", "Roofing", "Negotiated Work Reconstruction", "DRT - Water", "DRT - Mold", "DRT - Reconstruction", "DRT - Misc", "DRT - Fire", "General Cleaning", "Mold"
+        
+        **Important Notes:**
+        - All requests must use Content-Type: application/json
+        - Send raw JSON data in request body (not file upload)
+        - Division section is mandatory with at least one service selected
+        - API returns job_number and job_id after successful form submission
+        
+        **JSON Structure Sections:**
+        - generalInformation: Job details, dates, categories
+        - customerInformation: Customer details (Individual or Company)
+        - jobAddressInformation: Job site address information
+        - internalParticipants: SERVPRO team members
+        - externalParticipants: External contacts and companies
+        - policyInformation: Insurance policy details
+        - division: Services to be provided
+        - paymentServices: Payment and billing information
+        - lossDescriptionSection: Loss description and affected rooms
+        
+        **Example Usage:**
+        ```bash
+        # Using JSON file
+        curl -X POST http://localhost:5000/fill-form \\
+          -H "Content-Type: application/json" \\
+          -d @form_data_individual_example.json
+        
+        # Using raw JSON data
+        curl -X POST http://localhost:5000/fill-form \\
+          -H "Content-Type: application/json" \\
+          -d '{"generalInformation":{"officeName":"SPSC, LLC","lossCategory":"Residential"},"customerInformation":{"customerType":"Individual","firstName":"John","lastName":"Smith","address":"123 Main St","zipCode":"30309","city":"Atlanta","countyRegion":"Fulton County","country":"USA","stateProvince":"Georgia","mainPhoneNumber":{"number":"1-404-555-1234"}},"division":{"servicesSelected":["Water Mitigation","Structure"]}}'
+        ```
+        
+        **Customer Types:**
+        
+        Individual Customer - Set customerType to "Individual":
+        - Required: firstName, lastName, address, zipCode, city, countyRegion, country, stateProvince, mainPhoneNumber
+        - Use form_data_individual_example.json as template
+        
+        Company Customer - Set customerType to "Company":
+        - Required: companyName, companyAddress, companyZipCode, companyCity, companyCountyRegion, companyCountry, companyStateProvince, companyMainPhoneNumber
+        - Use form_data_company_example.json as template
+        
+        **Division Services (Required):**
+        At least one service must be selected in the division section using servicesSelected array. Example:
+        ```json
+        "division": {
+            "servicesSelected": [
+                "Water Mitigation",
+                "Structure", 
+                "Mold",
+                "Reconstruction"
+            ]
+        }
+        ```
+        Available services: "Temporary Repairs", "Water Mitigation", "Reconstruction", "Structure", "Contents", "Roofing", "Negotiated Work Reconstruction", "DRT - Water", "DRT - Mold", "DRT - Reconstruction", "DRT - Misc", "DRT - Fire", "General Cleaning", "Mold"
+        
+        **Request Format:**
+        - Method: POST
+        - Content-Type: application/json
+        - Body: Raw JSON data (not file upload)
+        - Required sections: generalInformation, customerInformation, division
         
         The process is completely automated and requires no user interaction.
-        
-        Expected file format: .json file with the complete form data structure.
-        Use form_data_individual_example.json or form_data_company_example.json as templates.
         """
         try:
-            # Check if file was uploaded
-            if 'file' not in request.files:
-                return {
+            # Check if JSON data was provided
+            if not request.is_json:
+                error_response = {
                     "success": False,
-                    "error": "No file uploaded. Please upload a JSON file with SERVPRO form data (e.g., form_data_individual_example.json)."
-                }, 400
+                    "error": "Request must be JSON. Please send JSON data with Content-Type: application/json header."
+                }
+                print(f"❌ Content-Type error, returning: {error_response}")
+                return error_response, 400
             
-            file = request.files['file']
-            
-            # Check if a file was actually selected
-            if file.filename == '':
-                return {
-                    "success": False,
-                    "error": "No file selected. Please choose a JSON file with SERVPRO form data."
-                }, 400
-            
-            # Check file extension
-            if not file.filename.lower().endswith('.json'):
-                return {
-                    "success": False,
-                    "error": f"Invalid file type '{file.filename}'. Please attach a JSON file with .json extension."
-                }, 400
-            
-            # Read and parse JSON file
-            try:
-                file_content = file.read().decode('utf-8')
-                form_data = json.loads(file_content)
-            except json.JSONDecodeError as e:
-                return {
-                    "success": False,
-                    "error": f"Invalid JSON syntax in file '{file.filename}': {str(e)}. Please check your JSON format or use form_data_individual_example.json as template."
-                }, 400
-            except UnicodeDecodeError:
-                return {
-                    "success": False,
-                    "error": f"File encoding error in '{file.filename}'. Please ensure the file is saved as UTF-8 encoded text."
-                }, 400
+            # Get JSON data from request body
+            form_data = request.get_json()
             
             if not form_data:
-                return {
+                error_response = {
                     "success": False,
-                    "error": f"Empty or invalid JSON file '{file.filename}'. Please provide a valid SERVPRO form data file like form_data_individual_example.json."
-                }, 400
+                    "error": "No JSON data provided. Please send valid SERVPRO form data structure in the request body."
+                }
+                print(f"❌ No JSON data error, returning: {error_response}")
+                return error_response, 400
             
             # Validate JSON format first
+            print(f"🔍 Validating JSON format...")
             is_format_valid, format_message = validate_json_format(form_data)
+            print(f"📋 Validation result: {is_format_valid}, Message: {format_message}")
             if not is_format_valid:
-                return {
+                print(f"❌ Validation failed: {format_message}")
+                error_response = {
                     "success": False,
                     "error": format_message
-                }, 400
+                }
+                print(f"🔧 Returning validation error response: {error_response}")
+                return error_response, 400
             
             # Validate form data
             is_valid, validation_message = validate_form_data(form_data)
             if not is_valid:
-                return {
+                error_response = {
                     "success": False,
                     "error": f"Invalid form data: {validation_message}"
-                }, 400
+                }
+                print(f"🔧 Returning form validation error response: {error_response}")
+                return error_response, 400
             
             print(f"📋 Received form data for customer type: {form_data['customerInformation']['customerType']}")
             
@@ -622,39 +910,58 @@ class FillForm(Resource):
             try:
                 # Setup browser
                 if not automation.setup_browser():
-                    return {
+                    error_response = {
                         "success": False,
                         "error": "Failed to setup browser"
-                    }, 500
+                    }
+                    print(f"🔧 Returning browser setup error: {error_response}")
+                    return error_response, 500
                 
                 # Login to SERVPRO
                 if not automation.login_to_servpro():
-                    return {
+                    error_response = {
                         "success": False,
                         "error": "Failed to login to SERVPRO"
-                    }, 500
+                    }
+                    print(f"🔧 Returning login error: {error_response}")
+                    return error_response, 500
                 
                 # Navigate to job creation page
                 if not automation.navigate_to_job_creation():
-                    return {
+                    error_response = {
                         "success": False,
                         "error": "Failed to navigate to job creation page"
-                    }, 500
+                    }
+                    print(f"🔧 Returning navigation error: {error_response}")
+                    return error_response, 500
                 
                 # Fill the form
                 if not automation.fill_form_with_data(form_data):
-                    return {
+                    error_response = {
                         "success": False,
                         "error": "Failed to fill the form"
-                    }, 500
+                    }
+                    print(f"🔧 Returning form filling error: {error_response}")
+                    return error_response, 500
+                
+                # Save and go to slideboard to get job details
+                job_number, job_id = automation.save_and_go_to_slideboard()
                 
                 # Success response
-                return {
+                response_data = {
                     "success": True,
-                    "message": "Form filled successfully",
+                    "message": "Form filled and job created successfully",
                     "customer_type": form_data['customerInformation']['customerType'],
                     "job_name": form_data.get('generalInformation', {}).get('jobName', 'N/A')
                 }
+                
+                # Add job details if available
+                if job_number:
+                    response_data["job_number"] = job_number
+                if job_id:
+                    response_data["job_id"] = job_id
+                
+                return response_data
             
             finally:
                 # Always cleanup browser resources
@@ -663,27 +970,41 @@ class FillForm(Resource):
         except Exception as e:
             error_details = str(e)
             traceback.print_exc()
-            return {
+            error_response = {
                 "success": False,
                 "error": f"Unexpected error: {error_details}"
-            }, 500
+            }
+            print(f"🔧 Returning unexpected error response: {error_response}")
+            return error_response, 500
 
 
 
 if __name__ == '__main__':
     print("🚀 Starting SERVPRO API...")
     print("📋 Available endpoints:")
+    print("   GET  / - Welcome message")
     print("   GET  /health - Health check")
-    print("   POST /fill-form - Fill SERVPRO form with JSON data")
+    print("   POST /fill-form - Fill SERVPRO form with raw JSON data")
     print("   GET  /docs/ - Interactive API documentation")
     print("\n🌐 API will be available at:")
     print("   Main API: http://localhost:5000")
     print("   Documentation: http://localhost:5000/docs/")
-    print("\n📝 Quick test with JSON file upload:")
+    print("\n📝 Quick test with raw JSON data:")
     print("   curl -X POST http://localhost:5000/fill-form \\")
-    print("     -F 'file=@form_data_individual_example.json'")
-    print("\n📖 Upload .json files: form_data_individual_example.json, form_data_company_example.json")
-    print("⚠️  Note: File must have .json extension and correct SERVPRO form structure")
-    print("🔍 Validation: API will provide detailed error messages for invalid files or formats")
+    print("     -H 'Content-Type: application/json' \\")
+    print("     -d @form_data_individual_example.json")
+    print("\n💡 Alternative using inline raw JSON:")
+    print("   curl -X POST http://localhost:5000/fill-form \\")
+    print("     -H 'Content-Type: application/json' \\")
+    print("     -d '{\"generalInformation\":{\"officeName\":\"SPSC, LLC\",\"lossCategory\":\"Residential\"},\"customerInformation\":{\"customerType\":\"Individual\",\"firstName\":\"John\",\"lastName\":\"Smith\",\"address\":\"123 Main St\",\"zipCode\":\"30309\",\"city\":\"Atlanta\",\"countyRegion\":\"Fulton County\",\"country\":\"USA\",\"stateProvince\":\"Georgia\",\"mainPhoneNumber\":{\"number\":\"1-404-555-1234\"}},\"division\":{\"servicesSelected\":[\"Water Mitigation\",\"Structure\"]}}'")
+    print("\n📖 JSON templates: form_data_individual_example.json, form_data_company_example.json")
+    print("⚠️  Note: Send raw JSON data in request body with Content-Type: application/json")
+    print("🔍 Validation: API validates mandatory fields including Division services and provides detailed error messages")
+    print("🎯 Swagger UI: Open http://localhost:5000/docs/ to test with interactive interface")
+    print("\n💡 Division Section Format Examples:")
+    print("   ✅ Correct: {'division': {'servicesSelected': ['Water Mitigation', 'Structure']}}")
+    print("   ❌ Wrong:   {'division': {'waterMitigation': true, 'contents': true}}")
+    print("   ❌ Empty:   {'division': {}}")
+    print("   ❌ Missing: (no division section)")
     
     app.run(host='0.0.0.0', port=5000, debug=True) 
